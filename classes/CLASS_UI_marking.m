@@ -1252,7 +1252,7 @@ classdef CLASS_UI_marking < handle
         function configureMainAxesContextmenu(obj)
             %%% reference line contextmenu
             
-            contextmenu_mainaxes_h = uicontextmenu('callback',@obj.contextmenu_mainaxes_callback);
+            contextmenu_mainaxes_h = uicontextmenu(obj.figurehandle.sev,'callback',@obj.contextmenu_mainaxes_callback);
             obj.contextmenuhandle.axesmain.alignchannels = uimenu(contextmenu_mainaxes_h,'Label','Align Channels');
             obj.contextmenuhandle.axesmain.centerepoch = uimenu(contextmenu_mainaxes_h,'Label','Center Here','callback',@obj.contextmenu_mainaxes_center_callback);
             obj.contextmenuhandle.axesmain.unhide = uimenu(contextmenu_mainaxes_h,'Label','Unhide');
@@ -1417,13 +1417,13 @@ classdef CLASS_UI_marking < handle
         % Utility Axes Contextmenus 
         % ----------------------
         function configureAxesUtilityContextmenu(obj)
-            contextmenu_axesutility_psd_h = uicontextmenu('callback',@obj.contextmenu_axesutility_psd_callback,'parent',obj.figurehandle.sev);
+            contextmenu_axesutility_psd_h = uicontextmenu(obj.figurehandle.sev,'callback',@obj.contextmenu_axesutility_psd_callback,'parent',obj.figurehandle.sev);
             obj.contextmenuhandle.axesutility.psd_autoscale = uimenu(contextmenu_axesutility_psd_h,'Label','Auto Scale','callback',@obj.contextmenu_axesutility_psd_autoscale_callback);
             obj.contextmenuhandle.axesutility.psd_select_channel = uimenu(contextmenu_axesutility_psd_h,'Label','Select Channel');
             uimenu(contextmenu_axesutility_psd_h,'Label','Pop out','callback',{@obj.popout_axes,obj.axeshandle.utility});
             obj.contextmenuhandle.axesutility.psd = contextmenu_axesutility_psd_h;
             
-            contextmenu_axesutility_evtstats_h = uicontextmenu('callback',@obj.contextmenu_axesutility_evtstats_callback,'parent',obj.figurehandle.sev);
+            contextmenu_axesutility_evtstats_h = uicontextmenu(obj.figurehandle.sev,'callback',@obj.contextmenu_axesutility_evtstats_callback,'parent',obj.figurehandle.sev);
             obj.contextmenuhandle.axesutility.evtstats_select_event = uimenu(contextmenu_axesutility_evtstats_h,'Label','Select Event');
             obj.contextmenuhandle.axesutility.evtstats_select_stats_type = uimenu(contextmenu_axesutility_evtstats_h,'Label','Parameter to show');
             uimenu(obj.contextmenuhandle.axesutility.evtstats_select_stats_type,'Label','Count','callback',{@obj.contextmenu_axesutility_evtstats_select_stats_type,'count'});
