@@ -124,6 +124,7 @@ function initializeCallbacks(hObject)
     set(handles.edit_edf_directory,'callback',{@edit_edf_directory_Callback,guidata(hObject)});
 	set(handles.edit_selectPlayList,'callback',{@edit_selectPlaylist_ButtonDownFcn,guidata(hObject)});
     set(handles.button_selectChannels,'callback',@selectChannels_Callback);
+    set(handles.push_method_settings,'callback',@push_exportMethodSettings_Callback);
     set(handles.menu_export_method,'callback',[]);
     set(handles.edit_selectPlayList,'buttondownfcn',{@edit_selectPlayList_ButtonDownFcn,guidata(hObject)});
     set(handles.push_export_directory,'callback',{@push_export_directory_Callback,guidata(hObject)});
@@ -131,6 +132,9 @@ function initializeCallbacks(hObject)
     
 end
 
+function push_exportMethodSettings_Callback(hObject,varargin)
+
+end
 
 % --- Outputs from this function are returned to the command line.
 function varargout = batch_export_OutputFcn(hObject, eventdata, handles) 
@@ -334,9 +338,9 @@ function process_export(exportSettings)
         end
     end
     
-    if(strcmpi(exportSettings.methodStruct.mfilename,'export_culled_channels') && ...
+    if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels') && ...
             exportSettings.channelSelection.all)
-        warndlg(sprintf('Will not export culled channels if all channels are selected.\nTry again with a subsection of the channels.\n'));
+        warndlg(sprintf('Will not export selected channels if all channels are selected.\nTry again with a subsection of the channels.\n'));
         return;
     end                     
     
@@ -378,7 +382,7 @@ function process_export(exportSettings)
                 else
                     
                     
-                    if(strcmpi(exportSettings.methodStruct.mfilename,'export_culled_channels'))
+                    if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels'))
                         status = sprintf('%s (%i of %i)',studyInfoStruct.study_name,i,file_count);
                         waitbar(i/(file_count+0.9),waitbarH,status);
                         
