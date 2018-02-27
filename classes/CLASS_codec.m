@@ -254,7 +254,7 @@ classdef CLASS_codec < handle
             if(isempty(intersect(packageName, candidateCategories)))
                 methodInformationFilename = [];
             else
-                methodInformationFilename = fullfile(rootPath,strcat('+',packageName),strcat(packageName,'.inf'));
+                methodInformationFilename = fullfile(rootPath,'..',strcat('+',packageName),strcat(packageName,'.inf'));
                 if(~exist(methodInformationFilename,'file'))
                     methodInformationFilename = [];
                 end

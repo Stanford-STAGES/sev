@@ -46,12 +46,15 @@ else
     
     initializeSettings(hObject);
     initializeCallbacks(hObject)
-
-    edfPath = MARKING.SETTINGS.BATCH_PROCESS.export.edf_folder; %the edf folder to do a batch job on.
-
-    if(~exist(edfPath,'file'))
-        edfPath = pwd;        
-    end;
+    try
+        edfPath = MARKING.SETTINGS.BATCH_PROCESS.export.edf_folder; %the edf folder to do a batch job on.
+        
+        if(~exist(edfPath,'file'))
+            edfPath = pwd;
+        end;
+    catch me
+        edfPath = pwd;
+    end
 
     updateGUI(CLASS_batch.checkPathForEDFs(edfPath),handles); 
  
@@ -91,20 +94,21 @@ function initializeSettings(hObject)
     set([handles.radio_channelsAll;
         handles.radio_channelsSome],'backgroundcolor',bgColor);
     
-    maxSourceChannelsAllowed = 14;
-    userdata.nReqdIndices = maxSourceChannelsAllowed;
-    userdata.selectedIndices = 1:maxSourceChannelsAllowed;    
-    set(handles.button_selectChannels,'userdata',userdata,'value',0);
    
     % export methods
     set([handles.push_method_settings
         handles.menu_export_method],'enable','off');
     set(handles.menu_export_method,'string',handles.user.methodsStruct.description,'value',1);
     
-    exportPath = MARKING.SETTINGS.BATCH_PROCESS.export.output_folder;                        
-    if(~exist(exportPath,'file'))
-        exportPath = pwd;        
-    end;
+    try
+        exportPath = MARKING.SETTINGS.BATCH_PROCESS.export.output_folder;
+        
+        if(~exist(exportPath,'file'))
+            exportPath = pwd;
+        end;
+    catch me
+        exportPath = pwd;
+    end
     
     set(handles.edit_export_directory,'string',exportPath,'enable','inactive');    
     set(handles.push_export_directory,'enable','on');
@@ -119,11 +123,12 @@ function initializeCallbacks(hObject)
     set(handles.push_edf_directory,'callback',{@push_edf_directory_Callback,guidata(hObject)});
     set(handles.edit_edf_directory,'callback',{@edit_edf_directory_Callback,guidata(hObject)});
 	set(handles.edit_selectPlayList,'callback',{@edit_selectPlaylist_ButtonDownFcn,guidata(hObject)});
-    set(handles.button_selectChannels,'callback',[]);
+    set(handles.button_selectChannels,'callback',@selectChannels_Callback);
     set(handles.menu_export_method,'callback',[]);
-    set(handles.push_start,'callback',{@push_start_Callback,guidata(hObject)});
     set(handles.edit_selectPlayList,'buttondownfcn',{@edit_selectPlayList_ButtonDownFcn,guidata(hObject)});
     set(handles.push_export_directory,'callback',{@push_export_directory_Callback,guidata(hObject)});
+    set(handles.push_start,'callback',{@push_start_Callback,guidata(hObject)});
+    
 end
 
 
@@ -137,6 +142,25 @@ function varargout = batch_export_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 varargout{1} = handles;
 
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% --- Executes on button press of buttonSelectSource
+function selectChannels_Callback(hObject,varargin)
+    userdata = get(hObject,'userdata');    
+    outputStruct = montage_dlg(userdata.labels,userdata.selectedIndices);
+            
+    if(isempty(outputStruct))
+        outputStruct.channels_selected= [];
+    end
+    userdata.selectedIndices = outputStruct.channels_selected;
+    set(hObject,'userdata',userdata);
+    handles = guidata(hObject);
+    if(~any(userdata.selectedIndices))
+        set(handles.radio_channelsAll,'value',1);
+    else
+        set(handles.radio_channelsSome,'value',1);
+    end
 end
 
 % --- Executes on button press in push_edf_directory.
@@ -187,9 +211,15 @@ function updateGUI(edfPathStruct,handles)
   relevantHandles = [handles.push_start
       handles.text_edfs_to_process
       handles.edit_edf_directory
+      get(handles.bg_channel_selection,'children')
       get(handles.panel_exportMethods,'children')];
   if(~isempty(edfPathStruct.edf_filename_list))
       set(relevantHandles,'enable','on');      
+      
+      userdata.labels = edfPathStruct.firstHDR.label;
+      userdata.selectedIndices = [];
+
+      set(handles.button_selectChannels,'userdata',userdata);
       set(handles.edit_edf_directory,'enable','inactive');      %alter this so I don't have to deal with callbacks or changes to the pathname via the edit widget, but still give some visual feedback to the effect that it is ready.
       
   else
@@ -258,7 +288,9 @@ function exportSettings = getExportSettings(handles)
        methodStruct.(fname) = handles.user.methodsStruct.(fname){method_selection_index};
     end
     channelSelection.all = get(handles.radio_channelsAll,'value');
-    channelSelection.source = [];
+    userData = get(handles.button_selectChannels,'userdata');
+    channelSelection.source = userData.labels(userData.selectedIndices);
+    
     
     exportSettings.edfPathname = get(handles.edit_edf_directory,'string');
     exportSettings.edfSelectionList = [];
@@ -293,6 +325,21 @@ function process_export(exportSettings)
     edfSelectionStruct = CLASS_batch.checkPathForEDFs(exportSettings.edfPathname,exportSettings.edfSelectionList);
     edf_fullfilenames = edfSelectionStruct.edf_fullfilename_list;
     file_count = numel(edf_fullfilenames);
+    
+    if(strcmpi(exportSettings.edfPathname,exportSettings.exportPathname))
+        exportSettings.exportPathname = fullfile(exportSettings.edfPathname,'export');
+        if(~isormkdir(exportSettings.exportPathname))
+            warndlg('EDF path and export path should be different.  I tried to create an export folder in your EDF path to help you out, but it did not work :(');
+            return;
+        end
+    end
+    
+    if(strcmpi(exportSettings.methodStruct.mfilename,'export_culled_channels') && ...
+            exportSettings.channelSelection.all)
+        warndlg(sprintf('Will not export culled channels if all channels are selected.\nTry again with a subsection of the channels.\n'));
+        return;
+    end                     
+    
     if(file_count>0)
         
         % prep the waitbarHandle and make it look nice
@@ -318,7 +365,7 @@ function process_export(exportSettings)
                 studyInfoStruct.edf_filename = edf_fullfilenames{i};
                 [studyInfoStruct.stages_filename, studyInfoStruct.edf_name] = CLASS_codec.getStagesFilenameFromEDF(studyInfoStruct.edf_filename);
                 
-                [~,studyInfoStruct.study_name,~] = fileparts(studyInfoStruct.edf_filename);
+                [~,studyInfoStruct.study_name,studyInfoStruct.study_ext] = fileparts(studyInfoStruct.edf_filename);
                 files_attempted(i)=1;
                 status = sprintf('%s (%i of %i)',studyInfoStruct.edf_name,i,file_count);
                 waitbar(i/(file_count+1),waitbarH,status);
@@ -330,56 +377,68 @@ function process_export(exportSettings)
                     waitbar(i/(file_count+1),waitbarH,status);
                 else
                     
-                    %% Load header 
-                    studyInfoStruct.edf_header = loadEDF(studyInfoStruct.edf_filename);
-                    status = sprintf('%s (%i of %i)\nLoading hypnogram (%s)',studyInfoStruct.edf_name,i,file_count,studyInfoStruct.stages_filename);
-                    waitbar(i/(file_count+0.9),waitbarH,status);
                     
-                    sec_per_epoch = 30;
-                    studyInfo.num_epochs = studyInfoStruct.edf_header.duration_sec/sec_per_epoch;
-                    
-                    
-                    %% load stages
-                    stagesStruct = CLASS_codec.loadSTAGES(studyInfoStruct.stages_filename,studyInfo.num_epochs);
-                    
-                    
-
-                    status = sprintf('%s (%i of %i)\nLoading channels from EDF\n%s',studyInfoStruct.edf_name,i,file_count,timeMessage);
-                    waitbar(i/(file_count+0.75),waitbarH,status);
-                    
-                    %% Load EDF channels
-                    if(exportSettings.channelSelection.all)
-                        [~,edfChannels] = loadEDF(studyInfoStruct.edf_filename);
+                    if(strcmpi(exportSettings.methodStruct.mfilename,'export_culled_channels'))
+                        status = sprintf('%s (%i of %i)',studyInfoStruct.study_name,i,file_count);
+                        waitbar(i/(file_count+0.9),waitbarH,status);
+                        
+                        fullDestFile = fullfile(exportSettings.exportPathname,[studyInfoStruct.study_name,studyInfoStruct.study_ext]);
+                        
+                        didExport = CLASS_converter.writeLiteEDF(studyInfoStruct.edf_filename,fullDestFile,exportSettings.channelSelection.source); %,exportSamplerate);
+                        if(didExport)
+                            files_completed(i) = true;
+                        else
+                            files_failed(i) = true;
+                        end
                         
                     else
-                        fprintf(1,'exportSettings.channelSelection.sources has not been tested!\n');
-                        [~,edfChannels] = loadEDF(studyInfoStruct.edf_filename,exportSettings.channelSelection.sources);                        
+                        %% Load header
+                        studyInfoStruct.edf_header = loadEDF(studyInfoStruct.edf_filename);
+                        status = sprintf('%s (%i of %i)\nLoading hypnogram (%s)',studyInfoStruct.edf_name,i,file_count,studyInfoStruct.stages_filename);
+                        waitbar(i/(file_count+0.9),waitbarH,status);
+                        
+                        sec_per_epoch = 30;
+                        studyInfo.num_epochs = studyInfoStruct.edf_header.duration_sec/sec_per_epoch;
+                        
+                        %% load stages
+                        stagesStruct = CLASS_codec.loadSTAGES(studyInfoStruct.stages_filename,studyInfo.num_epochs);
+                        
+                        status = sprintf('%s (%i of %i)\nLoading channels from EDF\n%s',studyInfoStruct.edf_name,i,file_count,timeMessage);
+                        waitbar(i/(file_count+0.75),waitbarH,status);
+                        
+                        %% Load EDF channels
+                        if(exportSettings.channelSelection.all)
+                            [~,edfChannels] = loadEDF(studyInfoStruct.edf_filename);
+                        else
+                            fprintf(1,'exportSettings.channelSelection.sources has not been tested!\n');
+                            [~,edfChannels] = loadEDF(studyInfoStruct.edf_filename,exportSettings.channelSelection.sources);
+                        end
+                        
+                        status = sprintf('%s (%i of %i)\nApplying export method(s)',studyInfoStruct.edf_name,i,file_count);
+                        waitbar(i/(file_count+0.4),waitbarH,status);
+                        
+                        %% obtain event file name
+                        studyInfoStruct.events_filename = CLASS_codec.getEventsFilenameFromEDF(studyInfoStruct.edf_filename);
+                        
+                        %% obtain export data
+                        exportData = CLASS_batch.getExportData(edfChannels,exportSettings.methodStruct,stagesStruct,studyInfoStruct);
+                        
+                        %% export data to disk
+                        
+                        if(~isempty(exportData))
+                            status = sprintf('%s (%i of %i)\nSaving output to file',studyInfoStruct.edf_name,i,file_count);
+                            waitbar(i/(file_count+0.2),waitbarH,status);
+                            studyInfoStruct.saveFilename = fullfile(exportSettings.exportPathname,strcat(studyInfoStruct.study_name,'.mat'));
+                            save(studyInfoStruct.saveFilename,'exportData');
+                            exportData = []; %#ok<NASGU>
+                            files_completed(i) = true;
+                            
+                        else
+                            
+                            files_failed(i) = true;
+                            
+                        end
                     end
-                    
-                    status = sprintf('%s (%i of %i)\nApplying export method(s)',studyInfoStruct.edf_name,i,file_count);
-                    waitbar(i/(file_count+0.4),waitbarH,status);
-                    
-                    %% obtain event file name
-                    studyInfoStruct.events_filename = CLASS_codec.getEventsFilenameFromEDF(studyInfoStruct.edf_filename);
-
-                    %% obtain export data
-                    exportData = CLASS_batch.getExportData(edfChannels,exportSettings.methodStruct,stagesStruct,studyInfoStruct);
-                    
-                    %% export data to disk 
-
-                    if(~isempty(exportData))
-                        status = sprintf('%s (%i of %i)\nSaving output to file',studyInfoStruct.edf_name,i,file_count);
-                        waitbar(i/(file_count+0.2),waitbarH,status);  
-                        studyInfoStruct.saveFilename = fullfile(exportSettings.exportPathname,strcat(studyInfoStruct.study_name,'.mat'));
-                        save(studyInfoStruct.saveFilename,'exportData');                         
-                        exportData = []; %#ok<NASGU>    
-                        files_completed(i) = true;
-                        
-                    else
-                        
-                        files_failed(i) = true;
-                        
-                    end   
                     
                     fileStopTime = toc(fileStartTime);
                     fprintf('File %d of %d (%0.2f%%) Completed in %0.2f seconds\n',i,file_count,i/file_count*100,fileStopTime);
@@ -413,28 +472,10 @@ function process_export(exportSettings)
         CLASS_batch.showCloseOutMessage(edfSelectionStruct.edf_filename_list,files_attempted,files_completed,files_failed,files_skipped,start_time);
         
     else
-        warndlg(sprintf('The check for EDFs in the following directory failed!\n\t%s',edfPath));
+        warndlg(sprintf('The check for EDFs in the following directory failed!\n\t%s',exportSettings.edfPathname));
     end
 
 end
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-% --- Executes on button press of buttonSelectSource
-function buttonSelectSources_Callback(hObject, eventdata)
-global GUI_TEMPLATE;
-userdata = get(hObject,'userdata');
-
-selectedIndices = channelSelector(userdata.nReqdIndices,GUI_TEMPLATE.EDF.labels,userdata.selectedIndices);
-if(~isempty(selectedIndices))
-    set(hObject,'userdata',userdata);
-    guidata(hObject);  %is this necessary?
-end
-
-end
-
-
 
 
 % --- Executes when user attempts to close figure1.

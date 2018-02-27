@@ -92,11 +92,9 @@ classdef CLASS_batch < handle
             if(num_edfs==0)
                 
                 if(num_edfs_all==0)
-                    edfPathStruct.statusString = [statusString, 'Please choose a different directory'];
-                    set(get(handles.bg_panel_playlist,'children'),'enable','off');
-                    
+                    edfPathStruct.statusString = [edfPathStruct.statusString, 'Please choose a different directory'];
                 else
-                    edfPathStruct.statusString = [statusString, 'Please select a different play list or use ''All'''];
+                    edfPathStruct.statusString = [edfPathStruct.statusString, 'Please select a different play list or use ''All'''];
                 end
             else               
                 first_edf_fullfilename = edfPathStruct.edf_fullfilename_list{1};

@@ -1,3 +1,4 @@
 #MATLAB_filename,  Label, Settings Editor
+export_culled_channels, Channel Selection, []
 export_candidate_eyesclosed, Candidate eyes closed, plist_editor_dlg
 export_biocals_eyesclosed, Alpha Power, plist_editor_dlg
