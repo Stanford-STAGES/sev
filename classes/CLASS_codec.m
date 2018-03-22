@@ -1354,14 +1354,24 @@ classdef CLASS_codec < handle
             names = {'HDR','type','start_stop_matrix','start_sec','stop_sec',...
                 'dur_sec','epoch','stage','description','unknown','channel',...
                 'samplerate','start_vec','stop_vec'};
-
-            defaults = cell(size(names));
-            values = defaults;
-            [values{:}] = parsepvpairs(names,defaults,varargin{:});
+        
+            % OLD CODE
+            % defaults = cell(size(names));
+            % values = defaults;
+            % [values{:}] = parsepvpairs(names,defaults,varargin{:});
+            %
+            % for n=1:numel(names)
+            %     evt_Struct.(names{n}) = values{n};
+            % end
+            % OLD CODE 
             
-            for n=1:numel(names)
-                evt_Struct.(names{n}) = values{n};
-            end
+            % REPLACEMENT CODE
+            defaultValues = cell(size(names));
+            defaultStruct = [names; defaultValues];
+            defaultStruct = struct(defaultStruct{:});
+            evt_Struct = parse_pv_pairs(defaultStruct, varargin);
+            % REPLACEMENT CODE
+            
             
             if( ~isempty(evt_Struct.start_sec) && (~isempty(evt_Struct.stop_sec)||~isempty(evt_Struct.dur_sec)) )
                 if(isempty(evt_Struct.dur_sec))
