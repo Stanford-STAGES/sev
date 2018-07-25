@@ -15,13 +15,13 @@ function [HDR, signal] = loadEDF(filename,channels)
 if(nargin==0)
     disp 'No input filename given; aborting';
     return;
-end;
+end
 if(nargin==1 || isempty(channels))
     channels = 0;
-end;
+end
 if(nargin>2)
     disp('Too many input arguments in loadEDF.  Extra input arguments are ignored');
-end;
+end
 
 %handle filenames with unicode characters in them
 filename = char(unicode2native(filename,'utf-8'));

@@ -607,7 +607,7 @@ classdef  CLASS_settings < handle
                         obj.PSD.wintype = 'hann';
                         obj.PSD.removemean = 'true';
                         obj.PSD.FFT_window_sec = 2; %length in second over which to calculate the PSD
-                        obj.PSD.interval = 2; %how often to take the FFT's
+                        obj.PSD.interval_sec = 2; %how often to take the FFT's
                         obj.PSD.freq_min = 0; %display min
                         obj.PSD.freq_max = 30; %display max                        
                     case 'BATCH_PROCESS'

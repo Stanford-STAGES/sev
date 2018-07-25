@@ -4,7 +4,7 @@ global MARKING;
 sev_pathname = sev_pathsetup();
 
 parameters_filename = fullfile(sev_pathname,'_sev.parameters.txt');
-sevFigH = sev_main();
+sevFigH = sev_main('visible','off');
 
 figHandles = guidata(sevFigH);
 figHandles.user.parameters_filename = parameters_filename;
@@ -34,7 +34,7 @@ try
         MARKING.initializeView(); %don't want to do this if running through batch mode?
         
     end
-    
+    set(sevFigH,'visible','on');
 catch me
     showME(me);
     fprintf(1,['The default settings file may be corrupted or inaccessible.',...

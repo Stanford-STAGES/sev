@@ -32,7 +32,7 @@ function varargout = sev_main(varargin)
 % loadSTAGES(stages_filename,num_epochs)
 % Edit the above text to modify the response to help sev_main
 
-% Last Modified by GUIDE v2.5 26-Feb-2018 12:41:16
+% Last Modified by GUIDE v2.5 25-Jul-2018 08:49:41
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -303,4 +303,3 @@ function menu_settings_reset_defaults_Callback(hObject, eventdata, handles)
 % Construct a questdlg with three options
     
     reset_defaults_dlg(parameters_filename);
-

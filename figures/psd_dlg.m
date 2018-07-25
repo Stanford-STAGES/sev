@@ -26,7 +26,7 @@ function varargout = psd_dlg(varargin)
 %out is a cell with the following properties
 %out.wintype - window type as a string (e.g. 'Hamming')
 %out.FFT_window_sec - window length in seconds
-%out.interval (FFT interval in seconds)
+%out.interval_sec (FFT interval in seconds)
 %out.modified (FALSE if no changes were made or if the user cancels or
 %closes the dialog without pressing the 'OK' button
 
@@ -89,15 +89,15 @@ if(isa(CHANNELS_CONTAINER,'CLASS_channels_container')&& CHANNELS_CONTAINER.num_c
     
 else
     channel_labels = 'No Channels Loaded';
-    set(handles.list_psg_channels,'enable','off');
-    handles.user.channel_ind = 0;
+    set(handles.list_psg_channels,'enable','off');    
+    handles.user.channel_ind = 1;
 end
 
 set(handles.list_psg_channels,'string',channel_labels,'value',handles.user.channel_ind,'callback',@list_psg_channels_Callback);
 
 handles.user.wintype = 'hanning';
 handles.user.FFT_window_sec = 2.0;  % updated to FFT_window_sec from 'winlen'
-handles.user.interval = 2.0;  % updated to 'interval' from 'fftint'
+handles.user.interval_sec = 2.0;  % updated to 'interval' from 'fftint'
 handles.user.freq_min = 0;
 handles.user.sampling_rate = 100;
 handles.user.freq_max = 50;
@@ -144,7 +144,7 @@ set(handles.windowtype_popupmenu,'value',p_ind);
 set(handles.windowtype_popupmenu,'string',p_str);
 
 set(handles.windowlength_edit,'string',num2str(handles.user.FFT_window_sec));
-set(handles.fft_interval_edit,'string',num2str(handles.user.interval));
+set(handles.fft_interval_edit,'string',num2str(handles.user.interval_sec ));
 set(handles.edit_min_hz,'string',num2str(handles.user.freq_min));
 set(handles.edit_max_hz,'string',num2str(handles.user.freq_max));
 
@@ -198,7 +198,7 @@ end
 % PSD.wintype = handles.user.wintype;
 % PSD.modified = handles.user.modified;
 % PSD.FFT_window_sec = handles.user.FFT_window_sec;
-% PSD.interval = handles.user.interval;
+% PSD.interval_sec = handles.user.interval_sec ;
 % if(~isfield(handles.user,'channel_ind'))
 %     PSD.channel_ind = 0;
 % else    
@@ -257,12 +257,12 @@ fftint = str2double(get(hObject,'String'));
 fftintmin = 0;
 fftintmax = 30;
 
-if(fftint<=fftintmin || fftint>fftintmax || isequal(fftint,handles.user.interval))
-    set(hObject,'string',num2str(handles.user.interval));
+if(fftint<=fftintmin || fftint>fftintmax || isequal(fftint,handles.user.interval_sec ))
+    set(hObject,'string',num2str(handles.user.interval_sec ));
 else
-    handles.user.interval = fftint;
+    handles.user.interval_sec = fftint;
     handles.user.modified = true;
-end;
+end
 
 guidata(hObject,handles);
 

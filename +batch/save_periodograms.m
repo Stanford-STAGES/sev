@@ -29,7 +29,7 @@ try
     rows = size(y,1);
     
     study_duration_in_seconds = numel(channelObj.raw_data)/channelObj.samplerate;
-    E = floor(0:channelObj.PSD.interval/StagingStruct.standard_epoch_sec:(study_duration_in_seconds-channelObj.PSD.FFT_window_sec)/StagingStruct.standard_epoch_sec)'+1;
+    E = floor(0:channelObj.PSD.interval_sec/StagingStruct.standard_epoch_sec:(study_duration_in_seconds-channelObj.PSD.FFT_window_sec)/StagingStruct.standard_epoch_sec)'+1;
     S = StagingStruct.line(E);
 
     numPeriodograms = numel(E);
@@ -42,7 +42,7 @@ try
         
         %periodogram_epoch refers to an epoch that is measured in terms of
         %the periodogram length and not a 30-second length
-        artifacts_per_periodogram_epoch = sample2epoch(artifact_indices,channelObj.PSD.interval,channelObj.samplerate);
+        artifacts_per_periodogram_epoch = sample2epoch(artifact_indices,channelObj.PSD.interval_sec ,channelObj.samplerate);
         
         artifacts_per_periodogram_epoch = min(artifacts_per_periodogram_epoch,numPeriodograms);
         
@@ -52,11 +52,11 @@ try
         % Begin section to drop:  
 
         %need to handle the overlapping case differently here...
-        %         if(channelObj.PSD.FFT_window_sec~=channelObj.PSD.interval)
+        %         if(channelObj.PSD.FFT_window_sec~=channelObj.PSD.interval_sec )
         %             %window_sec must be greater than interval_sec if they are not
         %             %equal - this is ensured in the PSD settings GUI - though
         %             %adjusting the parametes externally may cause trouble!
-        %             overlap_sec = ceil(channelObj.PSD.FFT_window_sec-channelObj.PSD.interval);
+        %             overlap_sec = ceil(channelObj.PSD.FFT_window_sec-channelObj.PSD.interval_sec );
         %             artifacts_per_periodogram_epoch(2:end,1) = artifacts_per_periodogram_epoch(2:end,1)-overlap_sec;
         %
         %             % Avoid going too early
@@ -73,7 +73,7 @@ try
         %found in the current artifact method
         for r = 1:size(artifacts_per_periodogram_epoch,1)
             A_ind(artifacts_per_periodogram_epoch(r,1):artifacts_per_periodogram_epoch(r,2),k)=true; %ARTIFACT_CONTAINER.cell_of_events{k}.batch_mode_score;
-        end;
+        end
         
         % Occassionally a detector will get over zealous and mark artifact
         % outside the actual data range!  Need to reign it back in here.
@@ -87,7 +87,7 @@ try
     
      ArtifactBool = sum(A_ind,2)>0;
 
-%      samples_per_artifact = channelObj.PSD.interval*channelObj.samplerate;
+%      samples_per_artifact = channelObj.PSD.interval_sec *channelObj.samplerate;
 %      artifact_mat = find(ArtifactBool);
 %      artifact_mat = [(artifact_mat-1)*samples_per_artifact+1,artifact_mat*samples_per_artifact];
      
@@ -111,7 +111,7 @@ try
         ,'#\tSpectrum Type:\t%s\r\n'...
         ,'#\tU_psd:\t%f\r\n'...
         ,'#\tU_power:\t%f\r\n'...
-        ,'%s\tSlow\tDelta\tTheta\tAlpha\tSigma\tBeta\tGamma\tMean0_30\tSum0_30\tA\tA_type\tS\tE\r\n'],batchID,analysis_CHANNEL_label,channelObj.PSD.FFT_window_sec,channelObj.PSD.nfft,channelObj.PSD.interval...
+        ,'%s\tSlow\tDelta\tTheta\tAlpha\tSigma\tBeta\tGamma\tMean0_30\tSum0_30\tA\tA_type\tS\tE\r\n'],batchID,analysis_CHANNEL_label,channelObj.PSD.FFT_window_sec,channelObj.PSD.nfft,channelObj.PSD.interval_sec ...
         , channelObj.src_samplerate, channelObj.samplerate...
         , channelObj.PSD.spectrum_type, channelObj.PSD.U_psd, channelObj.PSD.U_power...    
         , num2str(channelObj.PSD.x,'\t%0.4f'));%'\t%0.1f'

@@ -60,7 +60,7 @@ else
     samplerate = params.samplerate;
     
     PSD_settings.removemean = true;
-    PSD_settings.interval = params.short_window_sec;
+    PSD_settings.interval_sec = params.short_window_sec;
     PSD_settings.FFT_window_sec=params.short_window_sec;
     PSD_settings.wintype = params.wintype;
     

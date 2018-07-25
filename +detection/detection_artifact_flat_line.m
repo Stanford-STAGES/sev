@@ -52,7 +52,7 @@ else
     win_interval_sec = params.win_interval_sec;
     
     PSD_settings.removemean = MARKING.SETTINGS.PSD.removemean;
-    PSD_settings.interval = win_interval_sec;
+    PSD_settings.interval_sec = win_interval_sec;
     PSD_settings.FFT_window_sec=win_length_sec;
     PSD_settings.wintype = MARKING.SETTINGS.PSD.wintype;
     

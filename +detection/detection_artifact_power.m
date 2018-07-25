@@ -51,7 +51,7 @@ function detectStruct = detection_artifact_power(data,params,stageStruct)
         
         
         PSD_settings.FFT_window_sec = params.block_len_sec;
-        PSD_settings.interval = params.block_len_sec; %repeat every block, no overlapping
+        PSD_settings.interval_sec = params.block_len_sec; %repeat every block, no overlapping
         PSD_settings.removemean = 1;
         PSD_settings.wintype = 'rectwin';
         PSD_settings.spectrum_type = 'power';

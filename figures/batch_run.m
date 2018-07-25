@@ -1680,14 +1680,14 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                 channel_index = parBATCH_PROCESS.PSD_settings{k}.channel_indices;
                                 filename_out = fullfile(full_psd_path,[cur_filename(1:end-3), channel_label,'.', parBATCH_PROCESS.output_files.psd_filename]);
                                 batch.save_periodograms(batch_CHANNELS_CONTAINER.getChannel(channel_index),batch_STAGES,parBATCH_PROCESS.PSD_settings{k},filename_out,batch_ARTIFACT_CONTAINER,parBATCH_PROCESS.start_time);
-                            end;
+                            end
                             
                             for k = 1:numel(parBATCH_PROCESS.MUSIC_settings)
                                 channel_label = parBATCH_PROCESS.MUSIC_settings{k}.channel_labels{:};
                                 channel_index = parBATCH_PROCESS.MUSIC_settings{k}.channel_indices;
                                 filename_out = fullfile(full_psd_path,[cur_filename(1:end-3), channel_label,'.', parBATCH_PROCESS.output_files.music_filename]);
                                 batch.save_pmusic(batch_CHANNELS_CONTAINER.getChannel(channel_index),batch_STAGES,parBATCH_PROCESS.MUSIC_settings{k},filename_out,batch_ARTIFACT_CONTAINER,parBATCH_PROCESS.start_time);
-                            end;
+                            end
                             
                             %save the files to disk
                             if(BATCH_PROCESS.output_files.log_checkbox)
@@ -1724,7 +1724,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                             %                     waitHandle = findall(0,'tag','waitbarHTag');
                         end
                         
-                    end;
+                    end
                 catch cur_error
                     %             showME(cur_error);
                     disp([file_list(i).name, ' SKIPPED: The following error was encountered: (' cur_error.message ')']);

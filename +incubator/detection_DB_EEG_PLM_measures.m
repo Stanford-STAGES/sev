@@ -38,7 +38,7 @@ window_size = params.window_size_sec*params.samplerate;
 
 %PSD parameters
 PSD_params.FFT_window_sec = params.window_size_sec;
-PSD_params.interval = params.window_size_sec;
+PSD_params.interval_sec = params.window_size_sec;
 PSD_params.wintype = 'hamming';
 PSD_params.removemean = 1;
 

@@ -91,7 +91,7 @@ else
     removemean = 1;
     %calculate the power in the bands of interest and compare to threshold
     PSD_settings.removemean = removemean;
-    PSD_settings.interval = win_interval_sec;
+    PSD_settings.interval_sec = win_interval_sec;
     PSD_settings.FFT_window_sec=win_length_sec;
     PSD_settings.wintype = wintype;
     
