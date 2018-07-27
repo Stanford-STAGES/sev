@@ -1029,7 +1029,7 @@ function push_psd_settings_Callback(hObject, eventdata)
     if(new_settings.modified)
         new_settings = rmfield(new_settings,'modified');
         set(hObject,'userdata',new_settings);
-    end;
+    end
 end
 
 
