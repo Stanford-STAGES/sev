@@ -1672,6 +1672,8 @@ classdef CLASS_channels_container < handle
                chanName = strrep(chanName,'/','_');
                chanName = strrep(chanName,'\','_');
                chanName = strrep(chanName,' ','_');
+               chanName = strrep(chanName,'-','_');
+               
                assignin('base',chanName,data);
                uiwait(msgbox(sprintf('Channel data saved to workspace variable %s',chanName)));
            else
