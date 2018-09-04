@@ -334,7 +334,7 @@ function checkPathForEDFs(handles,playlist)
         else
             EDF_message = [num2str(num_edfs),' EDF files (',num2str(total_bytes,'%0.2f'),' MB) found in the current directory. '];
         end
-    end;
+    end
     
     
     affectedHandles = [handles.push_run
@@ -387,7 +387,7 @@ function checkPathForEDFs(handles,playlist)
         first_edf_filename = edf_file_list(1).name;
         HDR = loadEDF(fullfile(path,first_edf_filename));
         EDF_labels = HDR.label;
-    end;
+    end
     
     GUI_TEMPLATE.EDF.labels = EDF_labels;
     
@@ -400,35 +400,8 @@ function checkPathForEDFs(handles,playlist)
     
 end
 
+function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
 
-function edit_edf_directory_Callback(hObject, eventdata, handles)
-    % hObject    handle to edit_edf_directory (see GCBO)
-    % eventdata  reserved - to be defined in a future version of MATLAB
-    % handles    structure with handles and user data (see GUIDATA)
-    checkPathForEDFs(handles);
-    
-end
-% --- Executes during object creation, after setting all properties.
-function edit_edf_directory_CreateFcn(hObject, eventdata, handles)
-    % hObject    handle to edit_edf_directory (see GCBO)
-    % eventdata  reserved - to be defined in a future version of MATLAB
-    % handles    empty - handles not created until after all CreateFcns called
-    
-    % Hint: edit controls usually have a white background on Windows.
-    %       See ISPC and COMPUTER.
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-end
-
-% --- Executes on button press in push_run.
-function push_run_Callback(hObject, eventdata, handles)
-    % hObject    handle to push_run (see GCBO)
-    % eventdata  reserved - to be defined in a future version of MATLAB
-    % handles    structure with handles and user data (see GUIDATA)
-    %
-    %This function can only be called when there a valid directory (one which
-    %contains EDF files) has been selected.
     %This function grabs the entries from the GUI and puts them into the global
     %variable BATCH_PROCESS which will be referenced during the batch
     %processing.
@@ -700,7 +673,7 @@ function push_run_Callback(hObject, eventdata, handles)
         artifact_method_values = cell2mat(artifact_method_values);
         artifact_channel1_values = cell2mat(artifact_channel1_values);
         artifact_channel2_values = cell2mat(artifact_channel2_values);
-    end;
+    end
     
     artifact_settings_handles = flipud(findobj(handles.panel_artifact,'-regexp','tag','settings'));
     if(iscell(artifact_settings_handles))
@@ -769,11 +742,36 @@ function push_run_Callback(hObject, eventdata, handles)
     
     pathname = get(handles.edit_edf_directory,'string');
     playlist = getPlaylist(handles);
+end
+
+
+function edit_edf_directory_Callback(hObject, eventdata, handles)
+    % hObject    handle to edit_edf_directory (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    checkPathForEDFs(handles);
+    
+end
+
+
+% --- Executes on button press in push_run.
+function push_run_Callback(hObject, eventdata, handles)
+    % hObject    handle to push_run (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    %
+    %This function can only be called when there a valid directory (one which
+    %contains EDF files) has been selected.
+
+    [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles);
     batch_process(pathname,BATCH_PROCESS,playlist);
     % warndlg({'you are starting the batch mode with the following channels',BATCH_PROCESS.PSD_settings});
     
     %goal two - run the batch mode with knowledge of the PSD channel only...
 end
+
+
+
 
 % --- Executes on button press in push_add_event.
 function push_add_event_Callback(hObject, eventdata, handles)
@@ -1291,10 +1289,37 @@ end
 
 
 function push_importSetup_Callback(hObject, eventdata, handles)
-    [FILENAME, PATHNAME, FILTERINDEX] = uigetfullfile('*.exp', '');
+    fName = uigetfullfile({'*.exp', 'Batch export file (*.exp)';'*.*','All files'},'Select batch settings file');
+end
+
+function exportSetup(edfPathname, BATCH_PROCESS,playlist)
+    [FILENAME, PATHNAME, filterindex] = uiputfile('*.exp', '');
+    if(filterindex>0)
+        fName = fullfile(PATHNAME,FILENAME);
+        try
+            save(fName,'edfPathname','BATCH_PROCESS','playlist');
+            fprintf('Configuration saved to %s\n',fName)
+        catch me
+            showME(me);
+            fprintf('An error occured while trying to save the configuration to %s\n',fName);
+        end            
+    end    
 end
 
 function push_exportSetup_Callback(hObject, eventdata, handles)
-    [FILENAME, PATHNAME, FILTERINDEX] = uiputfile('*.exp', '');
+    [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles);
+    exportSetup(pathname, BATCH_PROCESS,playlist);   
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit_edf_directory_CreateFcn(hObject, eventdata, handles)
+    % hObject    handle to edit_edf_directory (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    empty - handles not created until after all CreateFcns called
     
+    % Hint: edit controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
 end
