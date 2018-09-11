@@ -1,5 +1,6 @@
 %DEIDENTIFYEDF  Deidentify EDF file header data.
 %   STATUS = DEIDENTIFYEDF(FILENAME) 
+%   STATUS = DEIDENTIFYEDF(FILENAME,[]) 
 %
 %   STATUS = DEIDENTIFYEDF(FILENAME, DESTINATION_FILENAME)
 %
@@ -20,7 +21,7 @@ if(~exist(filename,'file'))
     return;
 end
 
-if(nargin==2)
+if(nargin==2 && ~isempty(filenameOut))
     if(isdir(filenameOut))
         [~, name, ext] = fileparts(filename);
         filenameOut = fullfile(filenameOut, [name ext]);
