@@ -129,7 +129,7 @@ classdef  CLASS_settings < handle
 
             if(nargin<2)
                 pstruct = struct;                
-            end;
+            end
             
             while(file_open)
                 try
@@ -145,13 +145,13 @@ classdef  CLASS_settings < handle
                         end
                         pstruct = CLASS_settings.tokens2struct(pstruct,tok);
                     end
-                end;
+                end
                 catch me
                     showME(me);
                     fclose(fid);
                     file_open = false;
                 end  
-            end;
+            end
         end
         
         
@@ -174,17 +174,17 @@ classdef  CLASS_settings < handle
                 
                 for k=1:numel(tok)-1
                     fields = [fields '.' tok{k}{:}];
-                end;
+                end
                 
                 %     if(isempty(str2num(tok{end}{:})))
                 if(isnan(str2double(tok{end}{:})))
                     evalmsg = ['pstruct' fields '=tok{end}{:};'];
                 else
                     evalmsg = ['pstruct' fields '=str2double(tok{end}{:});'];
-                end;
+                end
                 
                 eval(evalmsg);
-            end;
+            end
         end
         
         
@@ -353,7 +353,11 @@ classdef  CLASS_settings < handle
             obj.fieldNames = {'VIEW','BATCH_PROCESS','PSD','MUSIC'};
             obj.setDefaults();
             
-            full_paramsFile = fullfile(obj.rootpathname,obj.parameters_filename);
+            if(exist(obj.parameters_filename,'file'))
+                full_paramsFile = obj.parameters_filename;
+            else
+                full_paramsFile = fullfile(obj.rootpathname,obj.parameters_filename);
+            end
             
             if(exist(full_paramsFile,'file'))                
                 paramStruct = obj.loadParametersFromFile(full_paramsFile);
@@ -413,7 +417,7 @@ classdef  CLASS_settings < handle
                         newPSD = rmfield(newPSD,'modified');
                         obj.PSD = newPSD;
                         wasModified = true;
-                    end;                
+                    end               
                 case 'MUSIC'
                     wasModified = obj.defaultsEditor('MUSIC');
                 case 'CLASSIFIER'
@@ -590,7 +594,7 @@ classdef  CLASS_settings < handle
                             catch me
                                 showME(me);
                                 obj.VIEW.output_pathname = fileparts(mfilename('fullpath'));
-                            end;
+                            end
                         end
                         obj.VIEW.detection_inf_file = 'detection.inf';
                         obj.VIEW.detection_path = '+detection';

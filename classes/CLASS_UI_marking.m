@@ -156,7 +156,7 @@ classdef CLASS_UI_marking < handle
             %check to see if a settings file exists
             if(nargin<3)
                 parameters_filename = '_sev.parameters.txt';
-            end;
+            end
             
             %create/intilize the settings object            
             obj.SETTINGS = CLASS_settings(rootpathname,parameters_filename);
@@ -245,7 +245,7 @@ classdef CLASS_UI_marking < handle
              
         
         % --- Executes when selected object is changed in bgroup_utility.
-        function bgroup_utility_radiobutton_selectionchangefcn(obj,hObject, eventdata)
+        function bgroup_utility_radiobutton_selectionchangefcn(obj,~, eventdata)
             % eventdata  structure with the following fields (see UIBUTTONGROUP)
             %	EventName: string 'SelectionChanged' (read only)
             %	OldValue: handle of the previously selected object or empty if none was selected
@@ -378,7 +378,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    handle to menu_file_screenshot (see GCBO)
         %> @param eventdata  reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_help_stage2workspace_callback(obj,hObject, eventdata)
+        function menu_help_stage2workspace_callback(obj,varargin)
             %send the staging data for the current file to the workspace
             varName = 'sev_STAGES';
             
@@ -393,7 +393,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    handle to menu_file_screenshot (see GCBO)
         %> @param eventdata  reserved - to be defined in a future version of MATLAB        
         % --------------------------------------------------------------------
-        function menu_file_screenshot_callback(obj,hObject, eventdata)
+        function menu_file_screenshot_callback(obj,varargin)
             % hObject    handle to menu_file_screenshot (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -484,7 +484,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    handle to menu_file_screenshot (see GCBO)
         %> @param eventdata  reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_help_outputHDR_callback(obj,hObject, eventdata)
+        function menu_help_outputHDR_callback(obj,varargin)
             % hObject    handle to menu_tools_printHDR (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -510,7 +510,7 @@ classdef CLASS_UI_marking < handle
         %> of MATLAB           
         %> @retval obj instance of CLASS_events class.
         % =================================================================
-        function menu_file_load_sco_callback(obj,hObject, eventdata)
+        function menu_file_load_sco_callback(obj,varargin)
             % hObject    handle to menu_file_load_sco (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -616,7 +616,7 @@ classdef CLASS_UI_marking < handle
         %> of MATLAB           
         %> @retval obj instance of CLASS_events class.
         % =================================================================
-        function menu_file_load_text_channel_callback(obj, hObject, eventdata)
+        function menu_file_load_text_channel_callback(obj, varargin)
             global CHANNELS_CONTAINER;
             
             
@@ -680,7 +680,7 @@ classdef CLASS_UI_marking < handle
         %> of MATLAB           
         %> @retval obj instance of CLASS_events class.
         % =================================================================
-        function menu_file_import_txt_eventsFile_callback(obj,hObject, eventdata)
+        function menu_file_import_txt_eventsFile_callback(obj,varargin)
             global EVENT_CONTAINER;            
             suggested_filename = fullfile(['evt.',obj.SETTINGS.VIEW.src_edf_filename(1:end-4),'.*']);
             if(obj.SETTINGS.VIEW.src_event_pathname_is_edf_pathname)
@@ -706,7 +706,7 @@ classdef CLASS_UI_marking < handle
                 EVENT_CONTAINER.loadEvtFile(fullfile(pathname,filename));
                 EVENT_CONTAINER.draw_events(); %events_to_plot(event_index) = 1;
                 obj.refreshAxes();
-            end;
+            end
         end
         
         
@@ -719,7 +719,7 @@ classdef CLASS_UI_marking < handle
         %> of MATLAB
         %> @retval obj instance of CLASS_events class.
         % =================================================================
-        function menu_file_import_evtsFile_callback(obj,hObject, eventdata)
+        function menu_file_import_evtsFile_callback(obj,varargin)
             global EVENT_CONTAINER;
             
             if(exist(obj.SETTINGS.VIEW.text_channels_filename,'file'))
@@ -763,7 +763,7 @@ classdef CLASS_UI_marking < handle
                 
                 
                 obj.refreshAxes();
-            end;
+            end
         end
         
         % =================================================================
@@ -775,7 +775,7 @@ classdef CLASS_UI_marking < handle
         %> of MATLAB           
         %> @retval obj instance of CLASS_events class.
         % =================================================================
-        function menu_file_load_events_container_callback(obj,hObject, eventdata)
+        function menu_file_load_events_container_callback(obj,varargin)
             global EVENT_CONTAINER;            
             [filename,pathname]=uigetfile({'*.MAT;*.mat','Matlab format'},'Event File Finder',...
                 obj.SETTINGS.VIEW.src_event_pathname);
@@ -785,11 +785,11 @@ classdef CLASS_UI_marking < handle
                 EVENT_CONTAINER.draw_events(); %events_to_plot(event_index) = 1;
                 obj.refreshAxes();
                 obj.refreshAxes();
-            end;
+            end
         end        
         
         % -----------------------------------------------------------------
-        function menu_file_import_evt_database_callback(obj,hObject, eventdata)
+        function menu_file_import_evt_database_callback(obj,varargin)
             % hObject    handle to menu_file_import_Evt_database (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -822,7 +822,7 @@ classdef CLASS_UI_marking < handle
         end
         
         % -----------------------------------------------------------------
-        function menu_file_export_events2txt_callback(obj,hObject, eventdata)
+        function menu_file_export_events2txt_callback(varargin)
             global EVENT_CONTAINER;
             if(ismethod(EVENT_CONTAINER,'save2txt'))
                 EVENT_CONTAINER.save2txt();
@@ -830,13 +830,13 @@ classdef CLASS_UI_marking < handle
         end
 
         % --------------------------------------------------------------------
-        function menu_file_export_psd2txt_callback(obj,hObject, eventdata, handles)
+        function menu_file_export_psd2txt_callback(obj,varargin)
             global CHANNELS_CONTAINER;            
             CHANNELS_CONTAINER.savePSD2txt(obj.SETTINGS.VIEW.src_edf_filename);
         end
         
         % --------------------------------------------------------------------
-        function menu_file_export_events_container_callback(obj,hObject, eventdata)
+        function menu_file_export_events_container_callback(obj,varargin)
             % hObject    handle to menu_file_export_events_container (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)            
@@ -848,7 +848,7 @@ classdef CLASS_UI_marking < handle
                 filename_out = [filename_out(1:end-3) BATCH_PROCESS.output_files.events_filename];
             else
                 filename_out = [filename_out(1:end-3) 'evt.mat'];
-            end;
+            end
             
             filename= fullfile(obj.SETTINGS.VIEW.src_event_pathname,obj.SETTINGS.VIEW.output_pathname,filename_out);
             
@@ -857,7 +857,7 @@ classdef CLASS_UI_marking < handle
         end
         
         % --------------------------------------------------------------------
-        function menu_file_export_events2mat_callback(obj,hObject, eventdata)
+        function menu_file_export_events2mat_callback(varargin)
             % hObject    handle to menu_file_export_events2mat (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)            
@@ -872,7 +872,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    handle to menu_file_export_hypnogram2sta (see GCBO)
         %> @param eventdata  reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_file_export_hypnogram2sta_callback(obj,hObject, eventdata)
+        function menu_file_export_hypnogram2sta_callback(obj,varargin)
                  
             %.STA file = obj.current_file
             % get a filename
@@ -892,12 +892,12 @@ classdef CLASS_UI_marking < handle
         end
         
         % --------------------------------------------------------------------
-        function menu_file_export_fft2txt_callback(obj,hObject, eventdata)
+        function menu_file_export_fft2txt_callback(varargin)
             disp 'This function was moved to another file';
         end
         
         % --------------------------------------------------------------------
-        function menu_file_createEDF_callback(obj,hObject, eventdata)
+        function menu_file_createEDF_callback(varargin)
             % hObject    handle to menu_file_createEDF (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -970,7 +970,7 @@ classdef CLASS_UI_marking < handle
         end
         
         
-        function resetSettings_callback(obj,hObject,eventdata,settingsName)
+        function resetSettings_callback(obj,~,~,settingsName)
             %settingsName is a string specifying the settings to update:
             %   'CLASSIFIER','FILTER
             if(strcmpi(settingsName,'filter'))
@@ -983,7 +983,7 @@ classdef CLASS_UI_marking < handle
         end
 
         
-        function updateSettings_callback(obj,hObject,eventdata,settingsName)
+        function updateSettings_callback(obj,~, ~,settingsName)
             %settingsName is a string specifying the settings to update:
             %   'PSD','MUSIC','CLASSIFIER','BATCH_PROCESS','VIEW'
             wasModified = obj.SETTINGS.update_callback(settingsName);
@@ -998,7 +998,7 @@ classdef CLASS_UI_marking < handle
             end
         end        
         
-        function menu_settings_saveChannelConfig_callback(obj,hObject, eventdata, handles)
+        function menu_settings_saveChannelConfig_callback(obj,varargin)
             % hObject    handle to menu_settings_saveChannelConfig (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -1014,7 +1014,7 @@ classdef CLASS_UI_marking < handle
         %    (menubar-->Tools-->         %
         %--------------------------------%        
         % --------------------------------------------------------------------
-        function filter_channel_callback(obj,hObject, eventdata)
+        function filter_channel_callback(obj,varargin)
             % hObject    handle to menu_tools_filter_toolbox (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -1048,7 +1048,7 @@ classdef CLASS_UI_marking < handle
             
         end
         
-        function compare_events_callback(obj,hObject,eventdata)
+        function compare_events_callback(obj,hObject,~)
             global EVENT_CONTAINER;
             
             handles = guidata(hObject);
@@ -1064,7 +1064,7 @@ classdef CLASS_UI_marking < handle
                     elseif(bounds==2) %compare the current view
                         range = get(handles.axes1,'xlim');
                         [score, events_space] =EVENT_CONTAINER.compareEvents(indices2compare,range);
-                    end;
+                    end
                     h = figure('name',[num2str(100*score,'%05.2f'),'% overlap'],...
                         'toolbar','none','menubar','none');
                     colormap([0 0 0; 1 1 1]);
@@ -1076,8 +1076,8 @@ classdef CLASS_UI_marking < handle
                     waitforbuttonpress();
                     if(ishandle(h))
                         delete(h);
-                    end;
-                end;
+                    end
+                end
             end
             
         end
@@ -1094,7 +1094,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    Unused (see GCBO)
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_tools_roc_directory_callback(obj,hObject, eventdata)
+        function menu_tools_roc_directory_callback(varargin)
             roc_dlg();
         end
         
@@ -1106,7 +1106,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    Unused (see GCBO)
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------        
-        function menu_tools_quad_callback(obj,hObject, eventdata)
+        function menu_tools_quad_callback(obj,varargin)
             % hObject    handle to menu_tools_quad (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -1135,7 +1135,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    Unused (see GCBO)
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------      
-        function menu_tools_timelineEventsSelection_callback(obj,hObject, eventdata)            
+        function menu_tools_timelineEventsSelection_callback(obj,varargin)            
             
             global EVENT_CONTAINER;
             % global CHANNELS_CONTAINER;
@@ -1152,7 +1152,7 @@ classdef CLASS_UI_marking < handle
                 %loop through each channel, and then through each event object within that
                 %channel - make a control for each and set to enable/checked if previously
                 %selected...
-                for k=1:EVENT_CONTAINER.num_events;
+                for k=1:EVENT_CONTAINER.num_events
                     
                     eventLabel = [EVENT_CONTAINER.cell_of_events{k}.label,' (',num2str(EVENT_CONTAINER.channel_vector(k)),')'];
                     
@@ -1160,9 +1160,9 @@ classdef CLASS_UI_marking < handle
                         parent = pan_channels;
                     else
                         parent = pan_file;
-                    end;
+                    end
                     uicontrol('style','checkbox','units',units,'string',eventLabel,'parent',pan_channels,'userdata',k,'value',CHANNELS_CONTAINER.events_to_plot(k));
-                end;
+                end
                 
                 
                 
@@ -1240,10 +1240,10 @@ classdef CLASS_UI_marking < handle
                         end
                     else
                         file_events_to_plot = get(h_file(cell2mat(get(h_file,'value'))==1),'userdata');
-                    end;
+                    end
                     if(iscell(file_events_to_plot))
                         file_events_to_plot = cell2mat(file_events_to_plot);
-                    end;
+                    end
                     
                     if(numel(h_channels)==1)
                         if(get(h_channels,'value'))
@@ -1253,7 +1253,7 @@ classdef CLASS_UI_marking < handle
                         end
                     else
                         channel_events_to_plot = get(h_channels(cell2mat(get(h_channels,'value'))==1),'userdata');
-                    end;
+                    end
                     if(iscell(channel_events_to_plot))
                         channel_events_to_plot = cell2mat(channel_events_to_plot);
                     else
@@ -1263,8 +1263,8 @@ classdef CLASS_UI_marking < handle
                     EVENT_CONTAINER.events_to_plot = [file_events_to_plot,channel_events_to_plot];
                     delete(dlg);
                     obj.refreshAxes(handles);
-                end;
-            end;
+                end
+            end
         end
 
 
@@ -1279,7 +1279,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    Unused (see GCBO)
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_batch_run_callback(obj,hObject, eventdata)
+        function menu_batch_run_callback(varargin)
             batch_run();
         end
 
@@ -1291,7 +1291,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    Unused (see GCBO)
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_batch_edfExport_callback(obj,~, ~)
+        function menu_batch_edfExport_callback(varargin)
             batch_export();
         end
              
@@ -1303,7 +1303,7 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    Unused (see GCBO)
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_batch_roc_database_callback(obj,hObject, eventdata)
+        function menu_batch_roc_database_callback(varargin)
             batch_roc_viewer();
         end
         
@@ -1331,7 +1331,7 @@ classdef CLASS_UI_marking < handle
         end
         
         % --------------------------------------------------------------------
-        function contextmenu_mainaxes_callback(obj,hObject, eventdata)
+        function contextmenu_mainaxes_callback(obj,varargin)
             %configure sub contextmenus
             global CHANNELS_CONTAINER;
             set(obj.contextmenuhandle.axesmain.alignchannels,'callback',@CHANNELS_CONTAINER.align_channels_on_axes);
@@ -1344,7 +1344,7 @@ classdef CLASS_UI_marking < handle
             CHANNELS_CONTAINER.configure_contextmenu_unhidechannels(obj.contextmenuhandle.axesmain.unhide);
         end
         
-        function contextmenu_mainaxes_center_callback(obj,hObject,evetdata)
+        function contextmenu_mainaxes_center_callback(obj,varargin)
             pos = round(get(obj.axeshandle.main,'currentpoint'));
             
             startSample = round((pos(1)-obj.getSamplesPerEpoch()/2));  %make mouse position be in the middle of the new epoch
@@ -1384,7 +1384,7 @@ classdef CLASS_UI_marking < handle
                 obj.setEpoch(new_epoch);
             else
                 obj.updateMainAxes();
-            end;
+            end
         end
         
         function increaseStartSample(obj)
@@ -1395,16 +1395,16 @@ classdef CLASS_UI_marking < handle
         end
         
         % --------------------------------------------------------------------
-        function contextmenu_mainaxes_majorgrid_callback(obj,hObject, eventdata)
+        function contextmenu_mainaxes_majorgrid_callback(obj,hObject, ~)
             if(strcmp(get(hObject,'Checked'),'on'))
                 set(hObject,'Checked','off');
                 set(obj.axeshandle.main,'xgrid','off');%,'ygrid','on');
             else
                 set(hObject,'Checked','on');
                 set(obj.axeshandle.main,'xgrid','on');%,'ygrid','off');
-            end;
+            end
         end
-        function contextmenu_mainaxes_minorgrid_callback(obj,hObject, eventdata)
+        function contextmenu_mainaxes_minorgrid_callback(obj,hObject, ~)
             if(strcmp(get(hObject,'Checked'),'on'))
                 set(hObject,'Checked','off');
                 set(obj.linehandle.x_minorgrid,'visible','off');
@@ -1412,19 +1412,19 @@ classdef CLASS_UI_marking < handle
                 set(hObject,'Checked','on');
                 obj.draw_x_minorgrid();
                 set(obj.linehandle.x_minorgrid,'visible','on');
-            end;
+            end
         end
         
 
         % --------------------------------------------------------------------
-        function context_menu_swap_Callback(hObject, eventdata, handles)
+        function context_menu_swap_Callback(varargin)
             % hObject    handle to context_menu_swap (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)   
         end
         
         % --------------------------------------------------------------------
-        function context_menu_swap_psd_Callback(hObject, eventdata, handles)
+        function context_menu_swap_psd_Callback(~,~, handles)
             % hObject    handle to context_menu_swap_psd (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -1437,7 +1437,7 @@ classdef CLASS_UI_marking < handle
         end
         
         % --------------------------------------------------------------------
-        function context_menu_swap_axes2_Callback(hObject, eventdata, handles)
+        function context_menu_swap_axes2_Callback(~,~, handles)
             % hObject    handle to context_menu_swap_axes2 (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -1446,7 +1446,7 @@ classdef CLASS_UI_marking < handle
             set(handles.axes2,'position',tmpPos);            
         end
         
-        function eventtoolbox_callback(obj,hObject,eventdata)
+        function eventtoolbox_callback(obj,varargin)
             %sets up and calls the CLASS_events_toolbox_dialog function which in turn
             %synthesizes new channels and events as determined by the user.
             global EVENT_CONTAINER;
@@ -1455,7 +1455,7 @@ classdef CLASS_UI_marking < handle
                 channel_index = obj.class_channel_index;
             else
                 channel_index = 1;
-            end;
+            end
             
             event_toolbox = CLASS_events_toolbox_dialog(); %create an empty object...
             event_toolbox.num_sources = 1;
@@ -1470,7 +1470,7 @@ classdef CLASS_UI_marking < handle
                     
                     EVENT_CONTAINER.draw_events(obj.event_index); %events_to_plot(event_index) = 1;
                     obj.refreshAxes();
-                end;
+                end
             catch ME
                 showME(ME);
                 delete(event_toolbox.dialog_handle);
@@ -1504,7 +1504,7 @@ classdef CLASS_UI_marking < handle
         
         % --------------------------------------------------------------------
         %Event stats utililty axes selection contextmenus
-        function contextmenu_axesutility_evtstats_callback(obj,hObject, eventdata)
+        function contextmenu_axesutility_evtstats_callback(obj,varargin)
             % hObject    handle to EvtStats_contextmenu (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -1523,30 +1523,30 @@ classdef CLASS_UI_marking < handle
                         checked = 'on';
                     else
                         checked = 'off';
-                    end;
+                    end
                     uimenu(event_selection_menu_h,'Label',label,'separator','off',...
                         'checked',checked,'userdata',{k,@obj.updateUtilityAxes},'callback',...
                         'global EVENT_CONTAINER;data= get(gcbo,''userdata'');EVENT_CONTAINER.cur_event_index=data{1}; EVENT_CONTAINER.summary_stats_axes_needs_update=true;func=data{2};feval(func);');
-                end;
+                end
             else
                 set(event_selection_menu_h,'enable','off');
             end
         end
         
-        function contextmenu_axesutility_evtstats_select_stats_type(obj,hObject,eventdata, selected_type_str)
+        function contextmenu_axesutility_evtstats_select_stats_type(obj,~,~, selected_type_str)
             global EVENT_CONTAINER;
             EVENT_CONTAINER.summary_stats_settings.type = selected_type_str;
             EVENT_CONTAINER.summary_stats_axes_needs_update=true;
             obj.updateUtilityAxes();
         end
             
-        function contextmenu_axesutility_evtstats_check_density_callback(obj,hObject,eventdata)
+        function contextmenu_axesutility_evtstats_check_density_callback(obj,hObject,~)
             global EVENT_CONTAINER;
             if(strcmp(get(hObject,'Checked'),'off'))
                 set(hObject,'checked','on');  %show density
             else
                 set(hObject,'checked','off'); %show raw
-            end;
+            end
             EVENT_CONTAINER.summary_stats_settings.show_density = strcmpi(get(hObject,'Checked'),'on');
             EVENT_CONTAINER.summary_stats_axes_needs_update=true;
 
@@ -1556,7 +1556,7 @@ classdef CLASS_UI_marking < handle
             
         %PSD utility axes
         % --------------------------------------------------------------------
-        function contextmenu_axesutility_psd_callback(obj,hobject, eventdata)
+        function contextmenu_axesutility_psd_callback(obj,varargin)
             % hObject    handle to PSD_context_menu (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             % handles    structure with handles and user data (see GUIDATA)
@@ -1573,24 +1573,24 @@ classdef CLASS_UI_marking < handle
                             checked = 'on';
                         else
                             checked = 'off';
-                        end;
+                        end
                         uimenu(channel_selection_h,'Label',tmp.title,'separator','off',...
                             'checked',checked,'callback',{@obj.contextmenu_axesutility_psd_selectchannel_callback,k});
-                    end;
-                end;
+                    end
+                end
             else
                 set(channel_selection_h,'enable','off');
             end
         end
         
          % --------------------------------------------------------------------
-        function contextmenu_axesutility_psd_selectchannel_callback(obj,hObject, eventdata, channel_index)
+        function contextmenu_axesutility_psd_selectchannel_callback(obj, ~, ~, channel_index)
             global CHANNELS_CONTAINER;
             CHANNELS_CONTAINER.current_spectrum_channel_index = channel_index;
             obj.updateUtilityAxes();
         end
         % --------------------------------------------------------------------
-        function contextmenu_axesutility_psd_autoscale_callback(obj,hObject, eventdata)
+        function contextmenu_axesutility_psd_autoscale_callback(obj,hObject, ~)
             % hObject    handle to psd_context_menu_auto_scale (see GCBO)
             % eventdata  reserved - to be defined in a future version of MATLAB
             
@@ -1600,7 +1600,7 @@ classdef CLASS_UI_marking < handle
             else
                 set(hObject,'checked','off');
                 set(obj.axeshandle.utility,'ylimmode','manual');%,'ylim',get(handles.axes3,'ylim'));
-            end;
+            end
         end
         
                 
@@ -1798,7 +1798,7 @@ classdef CLASS_UI_marking < handle
         end
         
         %% menubar callbacks from SEV
-        function load_EDF_callback(obj,hObject,eventdata)
+        function load_EDF_callback(obj,varargin)
             %SEV figure callback for choosing a source EDF file for loading
             
             try
@@ -1815,7 +1815,7 @@ classdef CLASS_UI_marking < handle
                     suggestion);
                 if(filename~=0)
                     obj.loadEDFintoSEV(filename,pathname);
-                end;
+                end
                 
             catch ME
                 fprintf(1,'Problem loading file in %s\n',mfilename('fullpath'));
@@ -1917,7 +1917,7 @@ classdef CLASS_UI_marking < handle
                         CHANNELS_CONTAINER.setCurrentSamples(obj.display_samples);
                         CHANNELS_CONTAINER.align_channels_on_axes();
                         CHANNELS_CONTAINER.setChannelSettings();
-                    end;
+                    end
                 end
             end 
             new_channels_loaded_flag =~isempty(montage)&&num_indicesToLoad>0;
@@ -1984,7 +1984,7 @@ classdef CLASS_UI_marking < handle
                 else
                     delete(cf(k)); %removes other children aside from this one
                 end
-            end;
+            end
             
             set(0,'showhiddenhandles','off');
             
@@ -2018,6 +2018,8 @@ classdef CLASS_UI_marking < handle
             set(obj.axeshandle.timeline,'Units','normalized',... %normalized allows it to resize automatically
                 'xgrid','off','ygrid','off',...
                 'xminortick','off',...
+                'tickdir','both',...
+                'ticklength',[0.0025 0],...
                 'xlimmode','manual',...
                 'xtickmode','manual',...
                 'xticklabelmode','manual',...
@@ -2144,7 +2146,7 @@ classdef CLASS_UI_marking < handle
             end
         end
         
-        function edit_epoch_callback(obj,hObject, eventdata)
+        function edit_epoch_callback(obj,hObject, ~)
             % Hints: get(hObject,'String') returns contents of edit_cur_epoch as text
             %        str2double(get(hObject,'String')) returns contents of edit_cur_epoch as a double
             epoch = str2double(get(hObject,'String'));
@@ -2153,7 +2155,7 @@ classdef CLASS_UI_marking < handle
                 set(hObject,'string',num2str(obj.current_epoch));
             else
                 obj.setEpoch(epoch);
-            end;
+            end
         end
         
         
@@ -2269,7 +2271,7 @@ classdef CLASS_UI_marking < handle
                 set(obj.texthandle.current_stage,'position',[obj.sev_mainaxes_xlim(1)+samples_per_epoch*9/20,-240,0],'string',num2str(current_stage),'parent',obj.axeshandle.main,'color',[1 1 1]*.7,'fontsize',42);
                 set(obj.texthandle.previous_stage,'position',[obj.sev_mainaxes_xlim(1)+samples_per_epoch/20,-240,0],'string',['< ', num2str(previous_stage)],'parent',obj.axeshandle.main,'color',[1 1 1]*.8,'fontsize',35);
                 set(obj.texthandle.next_stage,'position',[obj.sev_mainaxes_xlim(1)+samples_per_epoch*9/10,-240,0],'string',[num2str(next_stage) ' >'],'parent',obj.axeshandle.main,'color',[1 1 1]*.8,'fontsize',35);
-            end;
+            end
             
             x_ticks = obj.sev_mainaxes_xlim(1):samples_per_epoch/6:obj.sev_mainaxes_xlim(end);
             set(obj.axeshandle.main,'xlim',obj.sev_mainaxes_xlim,'ylim',obj.sev_mainaxes_ylim,...
@@ -2277,7 +2279,7 @@ classdef CLASS_UI_marking < handle
             
             if(strcmp(get(obj.linehandle.x_minorgrid,'visible'),'on'))
                 obj.draw_x_minorgrid();
-            end;
+            end
 
         end
         
@@ -2291,11 +2293,12 @@ classdef CLASS_UI_marking < handle
             
                         %show hypnogram and such
             xticks = linspace(1,obj.num_epochs,min(obj.num_epochs,5));
-            
+           
             set(obj.axeshandle.timeline,...
                 'xlim',[0 obj.num_epochs+1],... %add a buffer of one to each side of the x limit/axis
                 'ylim',[0 10],...
                 'xtick',xticks,...
+                'xticklabelrotation',0,...
                 'xticklabel',obj.getTimestampAtSamplePt(xticks*obj.getSamplesPerEpoch(),'HH:MM'));
 
             ylim = get(obj.axeshandle.timeline,'ylim');
@@ -2310,7 +2313,7 @@ classdef CLASS_UI_marking < handle
             else
                 upper_portion_height_percent = min(0.5+axes_buffer,0.2*num_events);
                 fontsize = 7;
-            end;
+            end
             
             lower_portion_height_percent = 1-upper_portion_height_percent;
             y_delta = abs(diff(ylim))/(num_events+1)*upper_portion_height_percent; %just want the top part - the +1 is to keep it in the range a little above and below the portion set aside for it
@@ -2318,25 +2321,35 @@ classdef CLASS_UI_marking < handle
             ylim(2) = ylim(2)-y_delta/2;
             for k = 1:num_events
                 EVENT_CONTAINER.cell_of_events{events_to_plot(k)}.draw_all(obj.axeshandle.timeline,ylim(2)-k*y_delta,y_delta,obj.sev_adjusted_STAGES);
-            end;
+            end
             
             y_max = 10*lower_portion_height_percent;
+            y_min = 10*upper_portion_height_percent;
             adjustedStageLine = obj.sev_adjusted_STAGES.line;
             
             
             %expect stages to be 0, 1, 2, 3, 4, 5, 6, 7
             possible_stages = [7,6,5,4,3,2,1,0];
-            tick = linspace(0,y_max,numel(possible_stages));
+            tick = linspace(y_min,y_max,numel(possible_stages));
             
             for k=1:numel(tick)
 %                 adjustedStageLine(obj.sev_STAGES.line==possible_stages(k))=tick(k);
                 adjustedStageLine(obj.sev_adjusted_STAGES.line==possible_stages(k))=tick(k);
             end
-            cycle_y = tick(2); %put the cycle label where stage 6 might be shown
-            tick(2) = []; %don't really want to show stage 6 as a label
+            
+            %put the cycle label where stage 6 might be shown
+            cycle_y = tick(2); 
+            
+            %then remove the tick mark and label  as we don't really want to show stage 6 as a label
+            tick(2) = []; 
+            possible_stages(2) = [];
+            
+            
             set(obj.axeshandle.timeline,...
                 'ytick',tick,...
-                'yticklabel','7|5|4|3|2|1|0','fontsize',fontsize);
+                'yticklabel',possible_stages,...
+                'yticklabelrotation',0,...
+                'fontsize',fontsize);
             
             
             %reverse the ordering so that stage 0 is at the top
@@ -2370,7 +2383,7 @@ classdef CLASS_UI_marking < handle
                 set(obj.annotationhandle.timeline,'x',[startX startX],'y',[pos(2) pos(2)+pos(4)]);
             else
                 obj.annotationhandle.timeline = annotation(obj.figurehandle.sev,'line',[startX, startX], [pos(2) pos(2)+pos(4)],'hittest','off');
-            end;  
+            end
         end
         
         function updateUtilityAxes(obj)
@@ -2476,7 +2489,7 @@ classdef CLASS_UI_marking < handle
             end
             if(nargin<3)
                 epoch_dur_sec = obj.SETTINGS.VIEW.standard_epoch_sec;
-            end;
+            end
             epoch = ceil(index/(epoch_dur_sec*sampleRate));
             
         end
@@ -2505,7 +2518,7 @@ classdef CLASS_UI_marking < handle
             else
                 %                     set(obj.axeshandle.main,'dataaspectratiomode','auto');
                 set(obj.axeshandle.main,'plotboxaspectratiomode','auto');
-            end;
+            end
 
 %             
 %             if(seconds_per_epoch == obj.SETTINGS.VIEW.standard_epoch_sec)
@@ -2531,7 +2544,7 @@ classdef CLASS_UI_marking < handle
                         
                         for n=1:num_stage_epochs
                             obj.display_samples(n,:)=(stage_epoch_ind(n)-1)*epochs2samples+1:(stage_epoch_ind(n))*epochs2samples;
-                        end;
+                        end
                         obj.display_samples = reshape(obj.display_samples',1,[]);
                         new_epoch = stage2show;
                     end
@@ -2550,14 +2563,14 @@ classdef CLASS_UI_marking < handle
             obj.sev_adjusted_STAGES.line = obj.sev_STAGES.line(round(linspace(1,numel(obj.sev_STAGES.line),obj.num_epochs)));
             obj.sev_adjusted_STAGES.cycles = obj.sev_STAGES.cycles(round(linspace(1,numel(obj.sev_STAGES.cycles),obj.num_epochs)));
             obj.setEpoch(new_epoch);
-        end;        
+        end        
                 
-        function obj = combo_selectEventLabel_callback(obj,hObject,eventdata)
+        function obj = combo_selectEventLabel_callback(obj,hObject,~)
             %             hObject is the jCombo box
             obj.event_label = get(hObject,'SelectedItem'); %hObject.getSelectedItem();            
         end
         
-        function toggle_toolbar_callback(obj,hObject,eventdata,inactiveToggleHandles)
+        function toggle_toolbar_callback(obj,hObject,~,inactiveToggleHandles)
             tag = get(hObject,'tag');
             obj.marking_state = tag;
             set(obj.epoch_resolution.menu_h,'enable','on');  %turn this off under one circumstance given below.
@@ -2641,7 +2654,7 @@ classdef CLASS_UI_marking < handle
         function obj = clear_handles(obj)
             if(ishghandle(obj.hg_group))
                 delete(obj.hg_group);
-            end;
+            end
             if(ishandle(obj.drag_right_h))
                 delete(obj.drag_right_h);
             end
@@ -2656,17 +2669,17 @@ classdef CLASS_UI_marking < handle
             if(~isempty(obj.current_linehandle))                
                 if(ishandle(obj.current_linehandle))
                     set(obj.current_linehandle,'selected','off');
-                end;
+                end
                 obj.current_linehandle = [];
-            end;
+            end
             obj.showReady();
         end
 
-        function sev_main_fig_WindowButtonUpFcn(obj,hObject,eventdata)            
+        function sev_main_fig_WindowButtonUpFcn(obj,varargin)            
             obj.sev_button_up();
         end
         
-        function sev_main_fig_WindowButtonDownFcn(obj,hObject,eventdata)
+        function sev_main_fig_WindowButtonDownFcn(obj,varargin)
             obj.sev_button_down();            
         end
         
@@ -2679,23 +2692,23 @@ classdef CLASS_UI_marking < handle
                         pos = round(get(obj.axeshandle.timeline,'currentpoint'));
                         clicked_epoch = pos(1);
                         obj.setEpoch(clicked_epoch);
-                    end;
-                end;
-            end;
+                    end
+                end
+            end
         end
         
         function obj = sev_button_down(obj)
             if(strcmpi(obj.marking_state,'off')) %don't want to reset the state if we are marking events
                 if(~isempty(obj.current_linehandle))
                     obj.restore_state();
-                end;
+                end
             else
                 if(ishghandle(obj.hg_group))
                     if(~any(gco==allchild(obj.hg_group))) %did not click on a member of the object being drawn...
                         obj.clear_handles();
-                    end;
-                end;
-            end;
+                    end
+                end
+            end
             if(~isempty(obj.current_linehandle)&&ishandle(obj.current_linehandle) && strcmpi(get(obj.current_linehandle,'selected'),'on'))
                 set(obj.current_linehandle,'selected','off');
             end
@@ -2764,7 +2777,7 @@ classdef CLASS_UI_marking < handle
                 end
             else
                 varargout{1}=[];
-            end;
+            end
         end
     
 
@@ -2804,7 +2817,7 @@ classdef CLASS_UI_marking < handle
                 x = mouse_pos(1,1);
                 w = 0.01;
                 xdata = [x,x+w;x,x+w];
-            end;
+            end
             
             ydata = [min_y, min_y;max_y, max_y];
             
@@ -2845,7 +2858,7 @@ classdef CLASS_UI_marking < handle
             %     set(hObject,'WindowButtonUpFcn',@disableDrag)
         end
         
-        function dragEdge_callback(obj,hObject,eventdata)
+        function dragEdge_callback(obj,varargin)
             
             mouse_pos = get(obj.axeshandle.main,'currentpoint');            
             cur_obj = gco;  %findobj(allchild(rectangle_h),'flat','selected','on');
@@ -2867,7 +2880,7 @@ classdef CLASS_UI_marking < handle
                     set(rightObj,'tag','left');
                 else
                     set(cur_obj,'xdata',mouse_pos(1));
-                end;
+                end
             elseif(strcmp(side,'right'))
                 w = mouse_pos(1)-rec_pos(1);
                 if(w<0)
@@ -2879,15 +2892,15 @@ classdef CLASS_UI_marking < handle
                     set(cur_obj,'tag','left');
                 else
                     set(cur_obj,'xdata',mouse_pos(1));
-                end;
+                end
                 
             else
                 disp 'oops.';
-            end;
+            end
             
             if(w==0)
                 w=0.001;
-            end;
+            end
             
             rec_pos(3) = w;
             set(rectangle_h,'position',rec_pos);
@@ -2898,7 +2911,7 @@ classdef CLASS_UI_marking < handle
             set(obj.texthandle.status,'string',sprintf('%s (%s): %0.2f s',obj.event_label,obj.channel_label,dur_sec));
         end
         
-        function enableDrag_callback(obj,hObject,eventdata)
+        function enableDrag_callback(obj,hObject,~)
             %called as part of interactive marking of the graph to annotate events
             %this is called when the user presses the left mouse button over a channel
 %             obj.class_channel_index
@@ -2908,7 +2921,7 @@ classdef CLASS_UI_marking < handle
             set(obj.figurehandle.sev,'WindowButtonUpFcn',@obj.disableDrag_callback)            
         end
         
-        function disableDrag_callback(obj,hObject,eventdata)
+        function disableDrag_callback(obj,varargin)
             %called as part of interactive marking of the graph to annotate events
             %this is called when the user releases the mouse button            
             global EVENT_CONTAINER;
@@ -2921,7 +2934,7 @@ classdef CLASS_UI_marking < handle
             if(ishandle(cur_obj))
                 set(cur_obj,'selected','off');
                 %         set(fig,'currentobject',rectangle_h); %this disables the current object...
-            end;
+            end
             
             set(obj.figurehandle.sev,'WindowButtonUpFcn',@obj.sev_main_fig_WindowButtonUpFcn); %let the user move across again...            
             set(obj.figurehandle.sev,'WindowButtonMotionFcn','');
@@ -2950,7 +2963,7 @@ classdef CLASS_UI_marking < handle
                         EVENT_CONTAINER.updateYOffset(obj.event_index,channel_obj.line_offset);
                         obj.refreshAxes();
                         
-                    end;
+                    end
                 end
             end
         end
@@ -3009,7 +3022,7 @@ classdef CLASS_UI_marking < handle
 %                     close(f);
 %                 end
             end
-        end;
+        end
         
         function plotSelection_callback(obj,varargin)
             y=obj.getSelectedChannelData();
@@ -3022,7 +3035,7 @@ classdef CLASS_UI_marking < handle
 %                     close(f);
 %                 end
                 
-            end;
+            end
             
         end
         
@@ -3059,7 +3072,7 @@ classdef CLASS_UI_marking < handle
             
             if(nargout==1)
                 grid_handle = gh;
-            end;
+            end
         end
         
        
