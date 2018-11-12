@@ -1864,8 +1864,13 @@ classdef CLASS_UI_marking < handle
                         obj.loadSTAGES(stages_filename,obj.num_epochs);
                         
                     else
-                        fprintf(1,'Alternate staging file %s not found!  Fictitious staging will be used.\r\n',stages_filename); 
-                        obj.loadSTAGES([],obj.num_epochs);
+                        stages_filename = fullfile(obj.SETTINGS.VIEW.src_edf_pathname,strcat(name,'_hypnogram.txt'));
+                        if(exist(stages_filename,'file'))
+                            obj.loadSTAGES(stages_filename,obj.num_epochs);
+                        else
+                            fprintf(1,'Alternate staging file %s not found!  Fictitious staging will be used.\r\n',stages_filename);
+                            obj.loadSTAGES([],obj.num_epochs);
+                        end
                     end
                 end
                 
