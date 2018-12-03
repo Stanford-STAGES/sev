@@ -22,50 +22,45 @@ end
 end
 
 % --- Executes just before batch_export is made visible.
-function batch_export_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to batch_export (see VARARGIN)
-
-global MARKING;
-
-%if MARKING is not initialized, then call sev.m with 'init_batch_Export' argument in
-%order to initialize the MARKING global before returning here.
-debugMode = true;
-
-if(isempty(MARKING) && ~debugMode)
-    %     sev('init_batch_export'); %runs the sev first, and then goes to the default batch export callback.
-    sev('init_batch_export');
-else
-
+function batch_export_OpeningFcn(hObject, eventdata, handles, settingStruct, varargin)
+    
+    
+    if(nargin<4)
+        settingStruct = struct('edf_older','.',...
+            'output_folder','.');
+    end
+    handles.user.settings = settingStruct;
     handles.user.methodsStruct = CLASS_batch.getExportMethods();
-
+    
     guidata(hObject,handles);
     
     initializeSettings(hObject);
     initializeCallbacks(hObject)
     try
-        edfPath = MARKING.SETTINGS.BATCH_PROCESS.export.edf_folder; %the edf folder to do a batch job on.
+        edfPath = handles.user.settings.edf_folder; %the edf folder to do a batch job on.
         
         if(~exist(edfPath,'file'))
             edfPath = pwd;
-        end;
+        end
     catch me
         edfPath = pwd;
+        showME(me);
     end
-
-    updateGUI(CLASS_batch.checkPathForEDFs(edfPath),handles); 
- 
+    
+    updateGUI(CLASS_batch.checkPathForEDFs(edfPath),handles);
+    
     % Update handles structure
     guidata(hObject, handles);
-end
+    uiwait(hObject);
+
 end
 
-function initializeSettings(hObject)
-    global MARKING;
-    
+function initializeSettings(hObject)    
     handles = guidata(hObject);
 
     % edf directory
@@ -83,8 +78,6 @@ function initializeSettings(hObject)
     set([handles.radio_processAll;
         handles.radio_processList],'backgroundcolor',bgColor);
     
-    
-    
     % channel selection
     bgColor = get(handles.bg_channel_selection,'backgroundcolor');
     set(handles.radio_channelsAll,'value',1);
@@ -101,12 +94,13 @@ function initializeSettings(hObject)
     set(handles.menu_export_method,'string',handles.user.methodsStruct.description,'value',1);
     
     try
-        exportPath = MARKING.SETTINGS.BATCH_PROCESS.export.output_folder;
+        exportPath = handles.user.settings.output_folder;
         
         if(~exist(exportPath,'file'))
             exportPath = pwd;
-        end;
+        end
     catch me
+        showME(me);
         exportPath = pwd;
     end
     
@@ -133,7 +127,7 @@ function initializeCallbacks(hObject)
 end
 
 function push_exportMethodSettings_Callback(hObject,varargin)
-
+    handles = guidata(hObject);
 end
 
 % --- Outputs from this function are returned to the command line.
@@ -144,8 +138,8 @@ function varargout = batch_export_OutputFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get default command line output from handles structure
-varargout{1} = handles;
-
+varargout{1} = handles.user.settings;
+delete(hObject);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -171,26 +165,27 @@ end
 function push_edf_directory_Callback(hObject, eventdata, handles)
 % hObject    handle to push_edf_directory (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-    global MARKING;
+% handles    structure with handles and user data (see GUIDATA)    
     
     edfPath = get(handles.edit_edf_directory,'string');
     
     if(~exist(edfPath,'file'))
-        edfPath = MARKING.SETTINGS.BATCH_PROCESS.export.edf_folder; %the edf folder to do a batch job on.
-    end;
+        edfPath = handles.user.settings.edf_folder; %the edf folder to do a batch job on.
+    end
     
     pathname = uigetfulldir(edfPath,'Select the directory containing EDF files to process');
     
     if(~isempty(pathname))
-        MARKING.SETTINGS.BATCH_PROCESS.edf_folder = pathname; %update for the next time..
+        handles.user.settings.edf_folder = pathname; %update for the next time..
         set(handles.edit_edf_directory,'string',pathname);
+        handles.user.settings.edf_folder = pathname;
+        guidata(hObject,handles);
         edfPathStruct = CLASS_batch.checkPathForEDFs(pathname);
         updateGUI(edfPathStruct,handles);
     else
         % The user pressed cancel and does not want tchange the pathname.
         
-    end;
+    end
 end
 
 
@@ -201,11 +196,13 @@ function push_export_directory_Callback(hObject, eventdata, handles)
     exportPathname = uigetfulldir(exportPathname,'Select the directory containing EDF files to process');
     
     if(~isempty(exportPathname))
-        set(handles.edit_export_directory,'string',exportPathname);        
+        set(handles.edit_export_directory,'string',exportPathname);  
+        handles.user.settings.output_folder = exportPathname;
+        guidata(hObject,handles);
     else
         % The user pressed cancel and does not want tchange the pathname.
         
-    end;
+    end
 end
 
 
@@ -255,15 +252,13 @@ function push_start_Callback(hObject, eventdata, handles)
 %contains EDF files) has been selected.
 %This function grabs the entries from the GUI and puts them into a settings
 %struct which is then passed to the export function.
-    global MARKING;
     exportSettings = getExportSettings(handles);
     outputPath = exportSettings.exportPathname;
-    if(exist(outputPath,'dir'))
-        MARKING.SETTINGS.BATCH_PROCESS.export.output_folder = outputPath;
+    if(exist(outputPath,'dir'))        
         process_export(exportSettings);
     else
         warndlg(sprintf('Output path (%s) does not exist',outputPath));
-    end;
+    end
 end
 
 %==========================================================================
@@ -458,7 +453,7 @@ function process_export(exportSettings)
                     fprintf('%s\n',timeMessage);
 
                     
-                end; 
+                end 
                 
             catch me
                 showME(me);
@@ -488,10 +483,8 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: delete(hObject) closes the figure
-% in order to save settings between use.
-delete(hObject);
-    
+uiresume(hObject);
+
 end
 
 
@@ -511,64 +504,80 @@ end
 
 % --- Executes when selected object is changed in bg_panel_playList.
 function bg_panel_playList_SelectionChangeFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in bg_panel_playList 
-% eventdata  structure with the following fields (see UIBUTTONGROUP)
-%	EventName: string 'SelectionChanged' (read only)
-%	OldValue: handle of the previously selected object or empty if none was selected
-%	NewValue: handle of the currently selected object
-% handles    structure with handles and user data (see GUIDATA)
-if(eventdata.NewValue==handles.radio_processList)
-    playList = getPlaylist(handles);
-    if(isempty(playList))
-        playList = getPlaylist(handles,'-gui');
+    % hObject    handle to the selected object in bg_panel_playList 
+    % eventdata  structure with the following fields (see UIBUTTONGROUP)
+    %	EventName: string 'SelectionChanged' (read only)
+    %	OldValue: handle of the previously selected object or empty if none was selected
+    %	NewValue: handle of the currently selected object
+    % handles    structure with handles and user data (see GUIDATA)
+    if(eventdata.NewValue==handles.radio_processList)
+        playList = getPlaylist(handles);
+        if(isempty(playList))
+            playList = getPlaylist(handles,'-gui');
+        end
+        handles.user.playList = playList;
+        checkPathForEDFs(handles,handles.user.playList);
+        guidata(hObject,handles);
+        
     end
-    handles.user.playList = playList;
-    checkPathForEDFs(handles,handles.user.playList);
-    guidata(hObject,handles);
-    
-end
 end
 
 % --- If Enable == 'on', executes on mouse press in 5 pixel border.
 % --- Otherwise, executes on mouse press in 5 pixel border or over edit_selectPlayList.
 function edit_selectPlayList_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to edit_selectPlayList (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    % hObject    handle to edit_selectPlayList (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    % warndlg('This has been implemented, but not yet tested');
+    
+    
+    % if(strcmpi('on',get(handles.radio_processList,'enable')) && get(handles.radio_processList,'value'))
+    %     filenameOfPlayList = get(handles.edit_selectPlayList,'string');
+    % else
+    %     filenameOfPlayList = [];  %just in case this is called unwantedly
+    % end
+    
+    filenameOfPlayList = get(handles.edit_selectPlayList,'string');
+    if(~exist(filenameOfPlayList,'file'))
+        filenameOfPlayList = getEDFPathname(handles);
+    end
+      
+        
+    [handles.user.playList, filenameOfPlayList] = CLASS_batch.getPlayList(filenameOfPlayList,'-gui');
+    
+    %update the gui
+    if(isempty(handles.user.playList))
+        set(handles.radio_processAll,'value',1);
+        set(handles.edit_selectPlayList,'string','<click to select play list>');
+    else
+        setEDFPathname(handles,fileparts(filenameOfPlayList));    
+        set(handles.radio_processList,'value',1);
+        set(handles.edit_selectPlayList,'string',filenameOfPlayList);
+    end
+    
+    CLASS_batch.checkPathForEDFs(getEDFPathname(handles),handles.user.playList);
+    
+    guidata(hObject,handles);
 
-warndlg('This has been implemented, but not yet tested');
-            
-                
-% if(strcmpi('on',get(handles.radio_processList,'enable')) && get(handles.radio_processList,'value'))
-%     filenameOfPlayList = get(handles.edit_selectPlayList,'string');
-% else
-%     filenameOfPlayList = [];  %just in case this is called unwantedly
-% end
-
-
-[handles.user.playList, filenameOfPlayList] = CLASS_batch.getPlaylist(handles,'-gui');
-
-%update the gui
-if(isempty(handles.user.playList))
-    set(handles.radio_processAll,'value',1);
-    set(handles.edit_selectPlayList,'string','<click to select play list>');
-else
-    set(handles.radio_processList,'value',1);
-    set(handles.edit_selectPlayList,'string',filenameOfPlayList);
 end
-
-CLASS_batch.checkPathForEDFs(getCurrentEDFPathname(hObject),handles.user.playList);
-
-guidata(hObject,handles);
-
+function didSet = setEDFPathname(handles,edfPath)
+    if(isdir(edfPath))
+        set(handles.edit_edf_directory,'string',edfPath);
+        didSet = true;
+    else
+        didSet = false;
+    end
 end
-
+function edfPathname = getEDFPathname(handles)
+    edfPathname = get(handles.edit_edf_directory,'string');
+end
 
 function edit_export_directory_CreateFcn(hObject, eventdata, handles)
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
+    % Hint: edit controls usually have a white background on Windows.
+    %       See ISPC and COMPUTER.
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
 end

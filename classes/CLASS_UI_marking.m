@@ -1291,8 +1291,11 @@ classdef CLASS_UI_marking < handle
         %> @param hObject    Unused (see GCBO)
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
-        function menu_batch_edfExport_callback(varargin)
-            batch_export();
+        function menu_batch_edfExport_callback(this, varargin)
+            exportSettingsUsed = batch_export(this.SETTINGS.BATCH_PROCESS.export);
+            if(~isempty(exportSettingsUsed))
+                this.SETTINGS.BATCH_PROCESS.export = exportSettingsUsed;
+            end
         end
              
         

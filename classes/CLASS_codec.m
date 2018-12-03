@@ -80,7 +80,7 @@ classdef CLASS_codec < handle
                             [~,stageVec] = CLASS_codec.parseSSCevtsFile(stages_filename,default_unknown_stage);
                             
                         elseif(strcmpi(ext,'.txt'))
-                            [~, stageVec] = CLASS_codec.parseDreemHynpogramFile(stages_filename,default_unknown_stage);
+                            [~, stageVec] = CLASS_codec.parseDreemHypnogramFile(stages_filename,default_unknown_stage);
                         end
                         epochs = 1:numel(stageVec);
                         stages = [epochs(:), stageVec];
@@ -145,8 +145,10 @@ classdef CLASS_codec < handle
                 % throw(MException('SEV:ARGERR','Missing or empty filename argument for loadSTAGES'));
             end
             %this may be unnecessary when the user does not care about sleep cycles.
-            % STAGES.cycles = scoreSleepCycles(STAGES.line);
-            STAGES.cycles = scoreSleepCycles_ver_REMweight(STAGES.line);
+            %STAGES.cycles = scoreSleepCycles(STAGES.line);
+            STAGES.cycles = scoreSleepCycles_ver_rules(STAGES.line);            
+            %STAGES.cycles = scoreSleepCycles_ver_REMweight(STAGES.line);
+            
             STAGES.study_duration_in_seconds = STAGES.standard_epoch_sec*numel(STAGES.line);
             
                     
@@ -281,8 +283,9 @@ classdef CLASS_codec < handle
         % =================================================================
         function [parameterStruct, packageMethodName] = getMethodParameters(methodName,packageName)
             candidateCategories = {'export','detection','filter'};
-            rootPath = fileparts(mfilename('fullpath'));
-            
+            % rootPath = fileparts(mfilename('fullpath'));
+            thisPath = fileparts(mfilename('fullpath'));
+            rootPath = fileparts(thisPath);  % currently, one directory up
             if(isempty(intersect(packageName, candidateCategories)))
                 packageMethodName = [];
                 parameterStruct = [];
@@ -326,7 +329,7 @@ classdef CLASS_codec < handle
                 exportMethodsStruct.mfilename = scanCell{1};
                 exportMethodsStruct.description = scanCell{2};
                 exportMethodsStruct.settingsEditor = scanCell{3};
-            end;
+            end
             
         end
 
@@ -1770,7 +1773,7 @@ classdef CLASS_codec < handle
         
         % f = '/Volumes/SeaG 1TB/DM/Dreem/DM-001/792eb6a0-66b1-4938-af74-9821822bcb07_hypnogram.txt'
         % CLASS_codec.parseDreemHynpogramFile(f);
-        function [SCOStruct, stageVec] = parseDreemHynpogramFile(filenameIn,unknown_stage_label,sampleRate)
+        function [SCOStruct, stageVec] = parseDreemHypnogramFile(filenameIn,unknown_stage_label,sampleRate)
             if(nargin<3)
                 sampleRate = 100;
             end
@@ -2012,7 +2015,7 @@ classdef CLASS_codec < handle
             
             for k=1:numFields %skip the start time...
                 evtStruct.(headerFields{k}) = scanCell{k};
-            end;
+            end
             
             fclose(fid);
         end
@@ -2123,7 +2126,7 @@ classdef CLASS_codec < handle
            str = fgetl(fid);
            if(strcmp(str(1),'#'))
                str = str(2:end);
-           end;
+           end
            
            %pull out all of the column names now and convert to a cell
            col_names = textscan(str,'%s');
@@ -2221,7 +2224,7 @@ classdef CLASS_codec < handle
            str = fgetl(fid);
            if(strcmp(str(1),'#'))
                str = str(2:end);
-           end;
+           end
            col_names = textscan(str,'%s');
            col_names = col_names{1};
            data = textscan(fid,['%f%s%s',repmat('%f',1,numel(col_names)-2)]);

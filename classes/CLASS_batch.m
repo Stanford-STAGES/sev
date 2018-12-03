@@ -87,7 +87,7 @@ classdef CLASS_batch < handle
                 else
                     edfPathStruct.statusString = [num2str(num_edfs),' EDF files (',num2str(total_bytes,'%0.1f'),' ',byte_suffix,') found in the current directory. '];
                 end
-            end;            
+            end            
             
             if(num_edfs==0)
                 
@@ -100,7 +100,7 @@ classdef CLASS_batch < handle
                 first_edf_fullfilename = edfPathStruct.edf_fullfilename_list{1};
                 edfPathStruct.firstHDR = loadEDF(first_edf_fullfilename);
                 
-            end;            
+            end           
         end
 
         
@@ -184,7 +184,6 @@ classdef CLASS_batch < handle
             % This is a struct whose fields are cell values.
             if(nargin<1 || isempty(exportInfFullFilename))
                 exportInfFullFilename = CLASS_codec.getMethodInformationFilename('export');
-                
             end
             
             exportMethodsStruct = CLASS_codec.parseExportInfFile(exportInfFullFilename);
@@ -192,11 +191,13 @@ classdef CLASS_batch < handle
                 
                 % import the package
                 import('export.*');  
-                exportMethodsStruct.settings = cell(size(exportMethodsStruct.mfilename));
-                for e=1:numel(exportMethodsStruct.mfilename)
-                    methodName = exportMethodsStruct.mfilename{e};
-                    exportMethodsStruct.settings{e} = CLASS_codec.getMethodParameters(methodName,'export');
-                end
+                exportMethodsStruct.settings = cellfun(@(x)CLASS_codec.getMethodParameters(x,'export'),exportMethodsStruct.mfilename,'uniformoutput',false);
+                
+                %                 exportMethodsStruct.settings = cell(size(exportMethodsStruct.mfilename));
+                %                 for e=1:numel(exportMethodsStruct.mfilename)
+                %                     methodName = exportMethodsStruct.mfilename{e};
+                %                     exportMethodsStruct.settings{e} = CLASS_codec.getMethodParameters(methodName,'export');
+                %                 end
             end
         end
         
@@ -351,15 +352,11 @@ classdef CLASS_batch < handle
                     
                     clipboard('copy',skipped_files(:)'); %make it a 1 row vector
                     disp([num2str(numel(selections)),' filenames copied to the clipboard.']);
-                end;
+                end
             else
                 dialogH = msgbox(summaryText,'Completed');
             end
-            
-            
         end
-        
-        
         
     end %End static methods
     

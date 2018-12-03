@@ -57,7 +57,7 @@ try
         yy = yy+1900;
     else
         yy = yy+2000;
-    end;
+    end
     HDR.T0(1) = yy;
 catch ME
     disp(['Failed to load the date/time in this EDF.  Filename: ', filename]);
@@ -86,7 +86,7 @@ if(nargout>1)
 
     if(channels == 0) %requesting all channels then
         channels = 1:HDR.num_signals;
-    end;
+    end
 
     signal = cell(numel(channels),1);
     bytes_per_sample = 2;
@@ -113,9 +113,9 @@ if(nargout>1)
             signal{k} = scale*(HDR.physical_minimum(cur_channel)+(signal{k}(:)-HDR.digital_minimum(cur_channel))...
                 *(HDR.physical_maximum(cur_channel)-HDR.physical_minimum(cur_channel))...
                 /(HDR.digital_maximum(cur_channel)-HDR.digital_minimum(cur_channel)));
-        end;
-    end;
-end;
+        end
+    end
+end
 
 % The voltage (i.e. signal) in the file by definition equals
 % [(physical miniumum)
