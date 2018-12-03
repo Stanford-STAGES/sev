@@ -47,7 +47,7 @@ end
 
 
 % --- Executes just before plist_editor_dlg is made visible.
-function plist_editor_dlg_OpeningFcn(hObject, eventdata, handles, varargin)
+function plist_editor_dlg_OpeningFcn(hObject, ~, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -57,7 +57,8 @@ function plist_editor_dlg_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin{1} = string label for specific settings that are being adjusted
 % this is a filter, artifact, or event detector.  Leave blank to access all
 % classifier or filter methods found in the specified directory (varargin{2})
-% varargin{2} = this is the directory of the filter or detector path
+% varargin{2} = this is the directory of the export, filter or detector path
+% or it is the full .inf settings filename
 % varargin{3} = parameters to be used instead of the ones loaded from the
 % xml file, when included
 
@@ -72,12 +73,16 @@ else
     handles.user.parametersInfPathname = fullfile(dPath,'+detection');
 end
 
-handles.user.detection_packageName = '';
-if(exist(handles.user.parametersInfPathname,'dir'))
+if(exist(handles.user.parametersInfPathname,'file')&&~isdir(handles.user.parametersInfPathname))
+   handles.user.parametersInfPathname  =  fileparts(handles.user.parametersInfPathname);
+end
+
+handles.user.packageName = '';
+if(isdir(handles.user.parametersInfPathname))
     [~,f,~] = fileparts(handles.user.parametersInfPathname);
     if(~isempty(f)&&f(1)=='+')
-        handles.user.detection_packageName = strcat(f(2:end),'.');
-        import(fullfile(handles.user.parametersInfPathname,strcat(handles.user.detection_packageName,'*')));
+        handles.user.packageName = strcat(f(2:end),'.');
+        import(fullfile(handles.user.parametersInfPathname,strcat(handles.user.packageName,'*')));
     end
 end
 
@@ -103,7 +108,7 @@ if(numel(varargin)>0 && ~isempty(varargin{1}))
     
     if(isempty(selected_method_ind))
         %is the algorithm input instead of the label? - try again
-        selected_method_label = strrep(selected_method_label,handles.user.detection_packageName,'');
+        selected_method_label = strrep(selected_method_label,handles.user.packageName,'');
         selected_method_ind = find(strcmp(selected_method_label,handles.user.methods.mfile),1);
     
         if(isempty(selected_method_ind))
@@ -116,7 +121,7 @@ if(numel(varargin)>0 && ~isempty(varargin{1}))
     else
         set(handles.menu_methods,'enable','inactive');
 %         set(handles.menu_methods,'style','text','string',selected_method_label,'fontWeight','bold')
-    end;
+    end
 else
     selected_method_ind = 1;
 end
@@ -207,7 +212,7 @@ selected_plist_filename = fullfile(handles.user.parametersInfPathname,[handles.u
 if(exist(selected_plist_filename,'file'))
     settings = plist.loadXMLPlist(selected_plist_filename);
 else
-    settings = feval(strcat(handles.user.detection_packageName,handles.user.methods.mfile{selection_ind}));
+    settings = feval(strcat(handles.user.packageName,handles.user.methods.mfile{selection_ind}));
 end
 
 num_properties = min(numel(fieldnames(settings)),handles.user.MAX_NUM_PROPERTIES);
@@ -404,7 +409,7 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 % Hint: delete(hObject) closes the figure
 % if(handles.user.modified)
 %     save_plist(handles);
-% end;
+% end
 uiresume();
 
 
@@ -463,7 +468,7 @@ handles.user.selected_method_ind = selection_ind;
 % selected_m_filename = fullfile(handles.user.parametersInfPathname,[handles.user.methods.mfile{selection_ind},'.m']);
 
 try
-    settings = feval(strcat(handles.user.detection_packageName,handles.user.methods.mfile{selection_ind}));
+    settings = feval(strcat(handles.user.packageName,handles.user.methods.mfile{selection_ind}));
     handles = set_method_fields(handles,settings);
     save_plist(handles);    
     guidata(hObject,handles);

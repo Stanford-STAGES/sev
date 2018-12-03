@@ -206,35 +206,56 @@ classdef  CLASS_settings < handle
         %> methods parameters. (e.g. plist_editor_dlg)
         %> - @c batch_mode_label (This is going to be removed)
         %> - @c params Parameters for each detection method; place holder for use anon (i.e. [] initially)
-        function detectionStruct = loadParametersInf(detectionPath,detectionInfFile)
+        function paramStruct = loadParametersInf(paramPath,paramInfFile)
             %loads a struct from the detection.inf file which contains the
             %various detection methods and parameters that the sev has
             %preloaded - or from filter.inf
             if(nargin<2)
                 if(nargin<1)
-                    detectionPath = '+detection';
+                    paramPath = '+detection';
                 end
-                [~, name, ~] = fileparts(detectionPath);
-                name = strrep(name,'+','');
-                detectionInfFile = strcat(name,'.inf');
+                if(exist(paramPath,'file') && ~isdir(paramPath))
+                    [paramPath, baseName, baseExt] = fileparts(paramPath);
+                    paramInfFile = [baseName, baseExt];
+                else
+                    [~, baseName, ~] = fileparts(paramPath);
+                    baseName = strrep(baseName,'+','');
+                    paramInfFile = strcat(baseName,'.inf');
+                end
+
             end            
             
-            detection_inf = fullfile(detectionPath,detectionInfFile);
+            parameter_inf = fullfile(paramPath,paramInfFile);
             
-            if(exist(detection_inf,'file'))
-                plusIndex = strfind(detectionPath,'+');
-                if(~isempty(plusIndex))
-                    importPath = strcat(strrep(detectionPath,'+',''),'.*');
+            if(exist(parameter_inf,'file'))
+               if(contains(paramPath,'+'))  % improved from: plusIndex = strfind(detectionPath,'+'); if(~isempty(plusIndex)) ...
+                    importPath = strcat(strrep(paramPath,'+',''),'.*');
                     import(importPath);
-                end
-                
-                fid = fopen(detection_inf,'r');
-                T = textscan(fid,'%s%s%n%s%s','commentstyle','#');
-                [mfile, evt_label, num_reqd_indices, param_gui, batch_mode_label] = T{:};
-                fclose(fid);
-                params = cell(numel(mfile),1);
+               end
+               fid = fopen(parameter_inf,'r');
+               
+               [~,baseName,~] = fileparts(paramPath);
+               switch(lower(strrep(baseName,'+','')))
+                   
+                   case 'export'
+                       % frewind(fid);
+                       T = textscan(fid,'%s %s %s','commentstyle','#','delimiter',',');
+                       [mfile, evt_label, param_gui] = T{:};
+                       num_reqd_indices = cell(size(mfile));
+                       batch_mode_label = cell(size(mfile));
+                   case {'detection','filter'}
+                       T = textscan(fid,'%s%s%n%s%s','commentstyle','#');
+                       [mfile, evt_label, num_reqd_indices, param_gui, batch_mode_label] = T{:};                       
+                   otherwise                       
+                       T = textscan(fid,'%s%s%n%s%s','commentstyle','#');
+                       [mfile, evt_label, num_reqd_indices, param_gui, batch_mode_label] = T{:};
+                   
+               end
+               
+               fclose(fid);
+               params = cell(numel(mfile),1);
             else
-                detection_files = dir(fullfile(detectionPath,'detection_*.m'));
+                detection_files = dir(fullfile(paramPath,'detection_*.m'));
                 num_files = numel(detection_files);
                 mfile = cell(num_files,1);
                 [mfile{:}]=detection_files.name;
@@ -252,12 +273,12 @@ classdef  CLASS_settings < handle
                 
             end
             
-            detectionStruct.mfile = mfile;
-            detectionStruct.evt_label = evt_label;
-            detectionStruct.num_reqd_indices = num_reqd_indices;
-            detectionStruct.param_gui = param_gui;
-            detectionStruct.batch_mode_label = batch_mode_label;
-            detectionStruct.params = params; %for storage of parameters as necessary
+            paramStruct.mfile = mfile;
+            paramStruct.evt_label = evt_label;
+            paramStruct.num_reqd_indices = num_reqd_indices;
+            paramStruct.param_gui = param_gui;
+            paramStruct.batch_mode_label = batch_mode_label;
+            paramStruct.params = params; %for storage of parameters as necessary
             
         end %end loadDetectionMethodsInf   
         

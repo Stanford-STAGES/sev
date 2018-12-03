@@ -179,7 +179,7 @@ classdef CLASS_batch < handle
         %> @note N is the number of non-row headers parsed from the
         %> category information (.inf) file.
         %------------------------------------------------------------------%
-        function exportMethodsStruct = getExportMethods(exportInfFullFilename)
+        function [exportMethodsStruct, exportInfFullFilename] = getExportMethods(exportInfFullFilename)
             
             % This is a struct whose fields are cell values.
             if(nargin<1 || isempty(exportInfFullFilename))

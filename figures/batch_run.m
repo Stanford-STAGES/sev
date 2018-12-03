@@ -84,7 +84,7 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
         if(isfield(MARKING.SETTINGS.BATCH_PROCESS,'edf_folder'))
             if(~isdir(MARKING.SETTINGS.BATCH_PROCESS.edf_folder) || strcmp(MARKING.SETTINGS.BATCH_PROCESS.edf_folder,'.'))
                 MARKING.SETTINGS.BATCH_PROCESS.edf_folder = pwd;
-            end;
+            end
             set(handles.edit_edf_directory,'string',MARKING.SETTINGS.BATCH_PROCESS.edf_folder);
         else
             set(handles.edit_edf_directory,'string',pwd);
@@ -141,7 +141,7 @@ function resizeForAddedRow(handles,resized_panel_h)
     pan_children = allchild(resized_panel_h);
     children_pos = cell2mat(get(pan_children,'position'));
     children_pos(:,2)=children_pos(:,2)+GUI_TEMPLATE.row_separation;
-    for k =1:numel(pan_children), set(pan_children(k),'position',children_pos(k,:));end;
+    for k =1:numel(pan_children), set(pan_children(k),'position',children_pos(k,:));end
     
     resized_panel_pos = get(resized_panel_h,'position');
     
@@ -163,7 +163,7 @@ function resizeForAddedRow(handles,resized_panel_h)
             pos(4) = pos(4)+GUI_TEMPLATE.row_separation;
         elseif(pos(2)>resized_panel_pos(2))
             pos(2) = pos(2)+GUI_TEMPLATE.row_separation;
-        end;
+        end
         set(h(k),'position',pos);
     end
     
@@ -195,7 +195,7 @@ function resizeForAddedRow(handles,resized_panel_h)
         h_check_save_img = uicontrol(GUI_TEMPLATE.check_save_image,'parent',resized_panel_h);
         h_params=uicontrol(GUI_TEMPLATE.push_parameter_settings,'parent',resized_panel_h);
         uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,[hc1,hc2],h_params,buttonEventSelectSources});
-    end;
+    end
 end
 
 % --- Outputs from this function are returned to the command line.
@@ -224,7 +224,7 @@ function push_directory_Callback(hObject, eventdata, handles)
     path = get(handles.edit_edf_directory,'string');
     if(~exist(path,'file'))
         path = handles.user.BATCH_PROCESS.edf_folder;
-    end;
+    end
     pathname = uigetdir(path,'Select the directory containing EDF files to process');
     
     if(isempty(pathname)||(isnumeric(pathname)&&pathname==0))
@@ -933,7 +933,7 @@ function loadDetectionMethods()
         num_reqd_indices = [num_reqd_indices;loaded_num_reqd_indices];
         param_gui = [{param_gui};loaded_param_gui];
         batch_mode_label = [batch_mode_label; loaded_batch_mode_label];
-    end;
+    end
     
     GUI_TEMPLATE.detection.labels = evt_label;
     GUI_TEMPLATE.detection.mfile = mfile;
@@ -1074,7 +1074,7 @@ function push_output_settings_Callback(hObject, eventdata, handles)
         BATCH_PROCESS.images = settings.images;
         handles.user.BATCH_PROCESS = BATCH_PROCESS;
         updateSave2ImageOptions(handles);
-    end;
+    end
     
     guidata(hObject,handles);
 end

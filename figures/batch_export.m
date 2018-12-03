@@ -35,7 +35,7 @@ function batch_export_OpeningFcn(hObject, eventdata, handles, settingStruct, var
             'output_folder','.');
     end
     handles.user.settings = settingStruct;
-    handles.user.methodsStruct = CLASS_batch.getExportMethods();
+    [handles.user.methodsStruct, handles.user.exportInfFilename] = CLASS_batch.getExportMethods();
     
     guidata(hObject,handles);
     
@@ -119,15 +119,50 @@ function initializeCallbacks(hObject)
 	set(handles.edit_selectPlayList,'callback',{@edit_selectPlaylist_ButtonDownFcn,guidata(hObject)});
     set(handles.button_selectChannels,'callback',@selectChannels_Callback);
     set(handles.push_method_settings,'callback',@push_exportMethodSettings_Callback);
-    set(handles.menu_export_method,'callback',[]);
+    set(handles.menu_export_method,'callback',@push_exportMethodChangeCb);
     set(handles.edit_selectPlayList,'buttondownfcn',{@edit_selectPlayList_ButtonDownFcn,guidata(hObject)});
     set(handles.push_export_directory,'callback',{@push_export_directory_Callback,guidata(hObject)});
     set(handles.push_start,'callback',{@push_start_Callback,guidata(hObject)});
     
 end
 
+function ind= getExportMethodIndex(anyH)
+    handles = guidata(anyH);
+    ind = get(handles.menu_export_method,'value');
+end
+
+function setExportMethodIndex(anyH)
+    handles = guidata(anyH);
+    handles.user.methodSelectionIndex = getExportMethodIndex(anyH);
+    guidata(anyH, handles);
+end
+
+function push_exportMethodChangeCb(hObject, ~)
+    setExportMethodIndex(hObject);
+end
+
+function settingStruct = getMethodSettingsStruct(anyH)
+    mInd = getExportMethodIndex(anyH);
+    methodStructs = getMethodStructs(anyH);
+    
+    settingStruct.exportMethod = methodStructs.mfilename{mInd};
+    settingStruct.editor = methodStructs.settingsEditor{mInd};
+    settingStruct.curSettings = methodStructs.settings{mInd};
+    settingStruct.infFilename = methodStructs.infFilename;
+end
+
+function methodStructs =  getMethodStructs(anyH)
+    handles = guidata(anyH);
+    methodStructs = handles.user.methodsStruct;
+    methodStructs.infFilename = handles.user.exportInfFilename;
+    
+end
+
 function push_exportMethodSettings_Callback(hObject,varargin)
-    handles = guidata(hObject);
+    
+    settings = getMethodSettingsStruct(hObject);
+    feval(settings.editor,settings.exportMethod, settings.infFilename); %, settings.curSettings);
+    
 end
 
 % --- Outputs from this function are returned to the command line.
