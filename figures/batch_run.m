@@ -48,7 +48,7 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
     if(isempty(MARKING))
         sev('batch'); %runs the sev first, and then goes to the default batch run...?
     else
-        
+            
         %have to assign user data to the button that handles multiple channel
         %sourcing
         maxSourceChannelsAllowed = 14;
@@ -57,10 +57,9 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
         set(handles.buttonEventSelectSources,'userdata',userdata,'value',0);
         
         %still using a global here; not great...
-        createGlobalTemplate(handles);
+        handles = createGlobalTemplate(handles);
         
-        loadDetectionMethods();
-        
+        loadDetectionMethods();        
         
         set(handles.push_synth_CHANNEL_settings,...
             'callback',{@synthesize_CHANNEL_configuration_callback,...
@@ -69,11 +68,10 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
         set(handles.menu_event_method,'string',GUI_TEMPLATE.detection.labels,'callback',...
             {@menu_event_callback,[handles.menu_event_channel1,handles.menu_event_channel2],handles.push_event_settings,handles.buttonEventSelectSources});
         
-        
         userdata.channel_h = handles.menu_psd_channel;
         userdata.settings_h = handles.push_psd_settings;
         
-        set(handles.pop_spectral_method,'userdata',userdata,'callback',{@pop_spectral_method_Callback,handles.menu_psd_channel,handles.push_psd_settings},...
+        set(handles.menu_spectral_method,'userdata',userdata,'callback',{@menu_spectral_method_Callback,handles.menu_psd_channel,handles.push_psd_settings},...
             'enable','off','string',GUI_TEMPLATE.spectrum_labels);
         
         set(handles.menu_artifact_method,'string',GUI_TEMPLATE.detection.labels,'callback',...
@@ -105,9 +103,52 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
             handles.menu_event_channel2],'enable','off','string','Channel 2');
         set([handles.push_event_settings
             handles.push_artifact_settings],'enable','off');
+
         handles.user.BATCH_PROCESS = MARKING.SETTINGS.BATCH_PROCESS;
         handles.user.PSD = MARKING.SETTINGS.PSD;
-        handles.user.PSD = MARKING.SETTINGS.PSD;
+        handles.user.MUSIC = MARKING.SETTINGS.MUSIC;
+        
+        
+        if(numel(varargin)>1)
+            params.importFile = handles.user.BATCH_PROCESS.configuration_file;
+            params = parse_pv_pairs(params,varargin);            
+            if(exist(params.importFile,'file'))
+                load(params.importFile,'-mat','edfPathname','BATCH_PROCESS','playlist');
+                BATCH_PROCESS.configuration_file = params.importFile;
+                handles.user.BATCH_PROCESS = BATCH_PROCESS;
+                handles.user.PSD = BATCH_PROCESS.PSD_settings{1};
+                setEDFPathname(handles,edfPathname);
+                setEDFPlayList(handles,playlist);
+                checkPathForEDFs(handles,playlist);
+                batchImport.synth_CHANNEL.importFcn = @addCHANNELRow;
+                batchImport.synth_CHANNEL.panelTag = 'panel_synth_CHANNEL';
+                
+                batchImport.event_settings.importFcn = @addEventRow;
+                batchImport.event_settings.panelTag = 'panel_events';
+                
+                batchImport.artifact_settings.importFcn = @addArtifactRow;
+                batchImport.artifact_settings.panelTag = 'panel_artifact';
+                batchImport.PSD_settings.importFcn = @addPSDRow;                
+                batchImport.PSD_settings.panelTag = 'panel_psd';
+                importFields=fieldnames(batchImport);
+                
+                for n=1:numel(importFields)
+                    fn = importFields{n};
+                    
+                    curStruct = BATCH_PROCESS.(fn);
+                    curImport = batchImport.(fn);
+                    if(iscell(curStruct) && ~isempty(curStruct))
+                        configurePanelRow(handles.user.(curImport.panelTag){1},curStruct{1});
+                        for t=2:numel(curStruct)                            
+                            % add rows as necessary
+                            addHandles = feval(curImport.importFcn,handles);                            
+                            configurePanelRow(addHandles,curStruct{t});
+                        end
+                    end
+                    
+                end
+            end
+        end
         
         % Choose default command line output for batch_run
         handles.output = hObject;
@@ -118,22 +159,22 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
     end
 end
 
-function addCHANNELRow(handles)
-    resizeForAddedRow(handles,handles.panel_synth_CHANNEL);
+%@brief Adds an event selection/detection row to the specified panel, and
+%resizes the panel so everything fits nicely still.
+function addedHandles = addCHANNELRow(handles)
+    addedHandles = resizeForAddedRow(handles,handles.panel_synth_CHANNEL);
+end
+function addedHandles = addEventRow(handles)
+    addedHandles = resizeForAddedRow(handles,handles.panel_events);
+end
+function addedHandles = addArtifactRow(handles)
+    addedHandles = resizeForAddedRow(handles,handles.panel_artifact);
+end
+function addedHandles = addPSDRow(handles)
+    addedHandles = resizeForAddedRow(handles,handles.panel_psd);
 end
 
-function addEventRow(handles)
-    %adds an event selection/detection row to the specified panel
-    %make room for the event row
-    resizeForAddedRow(handles,handles.panel_events);
-end
-function addArtifactRow(handles)
-    resizeForAddedRow(handles,handles.panel_artifact);
-end
-function addPSDRow(handles)
-    resizeForAddedRow(handles,handles.panel_psd);
-end
-function resizeForAddedRow(handles,resized_panel_h)
+function addedHandles = resizeForAddedRow(handles,resized_panel_h)
     global GUI_TEMPLATE;
     
     %move all of the children up to account for the change in size and location
@@ -174,8 +215,9 @@ function resizeForAddedRow(handles,resized_panel_h)
         h_params = uicontrol(GUI_TEMPLATE.push_parameter_settings,'parent',resized_panel_h,'userdata',handles.user.PSD);
         userdata.channel_h = hc1;
         userdata.settings_h = h_params;
-        uicontrol(GUI_TEMPLATE.spectrum,'parent',resized_panel_h,'enable','on',...
-            'callback',{@pop_spectral_method_Callback,hc1,h_params},'userdata',userdata);
+        h_psd_menu = uicontrol(GUI_TEMPLATE.spectrum,'parent',resized_panel_h,'enable','on',...
+            'callback',{@menu_spectral_method_Callback,hc1,h_params},'userdata',userdata);
+        rowHandles = [h_psd_menu, hc1, h_params];
     elseif(resized_panel_h==handles.panel_synth_CHANNEL)
         
         %add a source channel - channel1
@@ -187,6 +229,7 @@ function resizeForAddedRow(handles,resized_panel_h)
         %add the configuration/settings button
         h_params = uicontrol(GUI_TEMPLATE.push_CHANNEL_configuration,'parent',resized_panel_h,'enable','on',...
             'callback',{@synthesize_CHANNEL_configuration_callback,hc1,he1});
+        rowHandles = [hc1, he1, h_params];
     else
         hc1=uicontrol(GUI_TEMPLATE.channel1,'parent',resized_panel_h);
         hc2=uicontrol(GUI_TEMPLATE.channel2,'parent',resized_panel_h);
@@ -194,8 +237,14 @@ function resizeForAddedRow(handles,resized_panel_h)
         
         h_check_save_img = uicontrol(GUI_TEMPLATE.check_save_image,'parent',resized_panel_h);
         h_params=uicontrol(GUI_TEMPLATE.push_parameter_settings,'parent',resized_panel_h);
-        uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,[hc1,hc2],h_params,buttonEventSelectSources});
+        h_menu = uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,[hc1,hc2],h_params,buttonEventSelectSources});
+        rowHandles = [h_menu, h_check_save_img, hc1, hc2, buttonEventSelectSources, h_params];
     end
+    
+    panelTag = get(resized_panel_h,'tag');
+    handles.user.(panelTag){end+1} = rowHandles;
+    guidata(handles.figure1,handles);
+    addedHandles = rowHandles;
 end
 
 % --- Outputs from this function are returned to the command line.
@@ -233,6 +282,9 @@ function push_directory_Callback(hObject, eventdata, handles)
     
     handles.user.BATCH_PROCESS.edf_folder = pathname;
     guidata(hObject,handles);
+    setEDFPathname(handles,pathname);
+end
+function setEDFPathname(handles,pathname)
     set(handles.edit_edf_directory,'string',pathname);
     checkPathForEDFs(handles);
 end
@@ -275,6 +327,10 @@ function playlist = getPlaylist(handles,ply_filename)
     end
     
     %update the gui
+    setEDFPlayList(handles,playlist); 
+end
+
+function setEDFPlayList(handles,playlist)
     if(isempty(playlist))
         set(handles.radio_processAll,'value',1);
         set(handles.edit_selectPlaylist,'string','<click to select play list>');
@@ -282,7 +338,6 @@ function playlist = getPlaylist(handles,ply_filename)
         set(handles.radio_processList,'value',1);
         set(handles.edit_selectPlaylist,'string',ply_filename);
     end
-    
 end
 
 function filtered_file_struct = filterPlaylist(file_struct,file_filter_list)
@@ -377,7 +432,7 @@ function checkPathForEDFs(handles,playlist)
          
         set(handles.edit_synth_CHANNEL_name,'enable','off');
         
-        %         set(handles.pop_spectral_method,'enable','on');
+        %         set(handles.menu_spectral_method,'enable','on');
         %         set(handles.push_add_psd,'enable','on');
         %         set(get(handles.panel_artifact,'children'),'enable','on');
         %         set(get(handles.bg_panel_playlist,'children'),'enable','on');
@@ -484,7 +539,7 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
     BATCH_PROCESS.synth_CHANNEL.settings_lite = synth_channel_settings_lite; %necessary for loading the channels with batch.load_file
     
     %% grab the PSD parameters
-    psd_spectral_methods_h = findobj(handles.panel_psd,'-regexp','tag','pop_spectral_method');
+    psd_spectral_methods_h = findobj(handles.panel_psd,'-regexp','tag','menu_spectral_method');
     
     selected_PSD_channels = [];
     psd_channel_settings = {};
@@ -745,6 +800,152 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
 end
 
 
+function handles = createGlobalTemplate(handles)
+    %uses the intial panel entries created with GUIDE to serve as templates for
+    %adding more entries later.
+    global GUI_TEMPLATE;
+    
+    
+    handles.user.panel_synth_CHANNEL = {[handles.menu_synth_CHANNEL_channel1;
+        handles.edit_synth_CHANNEL_name
+        handles.push_synth_CHANNEL_settings]};
+    
+    handles.user.panel_events = {[handles.menu_event_method
+        handles.check_event_export_images
+        handles.menu_event_channel1
+        handles.menu_event_channel2
+        handles.buttonEventSelectSources
+        handles.push_event_settings]};
+    
+    handles.user.panel_artifact = {[handles.menu_artifact_method
+        handles.check_artifact_export_images
+        handles.menu_artifact_channel1
+        handles.menu_artifact_channel2
+        handles.buttonArtifactSelectSources
+        handles.push_artifact_settings]};
+    
+    handles.user.panel_psd = {[handles.menu_spectral_method
+        handles.menu_psd_channel
+        handles.push_psd_settings]};
+    
+    src.edit_synth_CHANNEL = get(handles.edit_synth_CHANNEL_name);
+    src.push_CHANNEL_configuration = get(handles.push_synth_CHANNEL_settings);    
+    src.channel1 = get(handles.menu_event_channel1);
+    src.channel2 = get(handles.menu_event_channel2);
+    src.check_save_image = get(handles.check_event_export_images);
+    src.push_parameter_settings = get(handles.push_event_settings);
+    src.buttonEventSelectSources = get(handles.buttonEventSelectSources);
+    src.buttonArtifactSelectSources = get(handles.buttonArtifactSelectSources);    
+    src.evt_method = get(handles.menu_event_method);    
+    src.spectrum = get(handles.menu_spectral_method);    
+    
+    %Finally implemented with a for loop 12/1/2018 @hyatt    
+    fields = fieldnames(src);
+    for f=1:numel(fields)
+        fName = fields{f};
+        GUI_TEMPLATE.(fName) = normalizeUicontrolFields(src.(fName));
+    end
+    GUI_TEMPLATE.num_synth_channels = 0;  %number of synthesized channels is zero at first
+        
+       
+    %I liked the distance between these two on the GUIDE display of the figure
+    %and would like to keep the same spacing for additional rows that are added
+    add_button_pos = get(handles.push_add_event,'position'); 
+    GUI_TEMPLATE.row_separation = add_button_pos(2)-src.evt_method.Position(2);
+    GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC'};
+    % GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC','Coherence'};
+end
+
+function loadDetectionMethods()
+    %load up any available detection methods found in the detection_path
+    %(initially this was labeled '+detection' from the working path
+    
+    global MARKING;
+    global GUI_TEMPLATE;
+    
+    
+    if(isfield(MARKING.SETTINGS.VIEW,'detection_path'))
+        detection_inf = fullfile(MARKING.SETTINGS.VIEW.detection_path,'detection.inf');
+    else
+        detection_inf = fullfile('+detection','detection.inf');
+    end
+    
+    %this part is initialized for the first choice, which is 'none' - no
+    %artifact or event selected...
+    evt_label = 'none';
+    mfile = 'Error';
+    num_reqd_indices = 0;
+    param_gui = 'none';
+    batch_mode_label = '_';
+    
+    if(exist(detection_inf,'file'))
+        [loaded_mfile, loaded_evt_label, loaded_num_reqd_indices, loaded_param_gui, loaded_batch_mode_label] = textread(detection_inf,'%s%s%n%s%s','commentstyle','shell');
+        
+        evt_label = [{evt_label};loaded_evt_label];
+        mfile = [{mfile};loaded_mfile];
+        num_reqd_indices = [num_reqd_indices;loaded_num_reqd_indices];
+        param_gui = [{param_gui};loaded_param_gui];
+        batch_mode_label = [batch_mode_label; loaded_batch_mode_label];
+    end
+    
+    GUI_TEMPLATE.detection.labels = evt_label;
+    GUI_TEMPLATE.detection.mfile = mfile;
+    GUI_TEMPLATE.detection.reqd_indices = num_reqd_indices;
+    GUI_TEMPLATE.detection.param_gui = param_gui;
+    GUI_TEMPLATE.detection.batch_mode_label = batch_mode_label;
+    GUI_TEMPLATE.evt_method.String = evt_label;  %need this here so that newly created rows have these detection options available.
+end
+
+function configurePanelRow(rowHandles, paramStruct)
+    if(~isempty(paramStruct))
+        panelTag = get(get(rowHandles(1),'parent'),'tag');
+        switch lower(panelTag)
+            case {'panel_events','panel_artifact'}
+                % 
+                setMenuSelection(rowHandles(1),paramStruct.method_label);
+                updateDetectorSelection(rowHandles(1),rowHandles(3:4),rowHandles(6),rowHandles(4));
+                set(rowHandles(2),'value',paramStruct.save2img);
+                setMenuSelection(rowHandles(3),paramStruct.channel_labels(1));
+                if(numel(paramStruct.channel_labels)>1)
+                    setMenuSelection(rowHandles(4),paramStruct.channel_labels(2));
+                    set(rowHandles(4),'visible','on','enable','on');
+                end
+                set(rowHandles(6),'userdata',paramStruct.params);
+               
+            case 'psd'
+                
+            case 'panel_synth_channel'
+                
+                
+            otherwise
+        end
+        
+        %         fNames = fieldnames(paramStruct);
+        %         numFields = numel(fNames);
+        %         if(numFields ==numel(rowHandles))
+        %             for f=1:numFields
+        %                 curValue = paramStruct.(fNames{f});
+        %                 if(~isempty(curValue))
+        %                     switch class(curValue)
+        %                         case 'numeric'
+        %                             set(rowHandles{f},'value',curValue);
+        %                         case 'char'
+        %                             set(rowHandles{f},'string',curValue);
+        %                         case 'cell'
+        %                             set(rowHandles{f},'value',find(strcmpi(curValue{1},get(rowHandles{f},'string'))));
+        %                         case 'struct'
+        %                             set(rowHandles{f},'userdata',curValue);
+        %                     end
+        %                 end
+        %             end
+        %         end
+    end
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Callbacks
 function edit_edf_directory_Callback(hObject, eventdata, handles)
     % hObject    handle to edit_edf_directory (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
@@ -796,155 +997,7 @@ function push_add_artifact_Callback(hObject, eventdata, handles)
     addArtifactRow(handles);
 end
 
-function createGlobalTemplate(handles)
-    %uses the intial panel entries created with GUIDE to serve as templates for
-    %adding more entries later.
-    global GUI_TEMPLATE;
-    
-    edit_synth_CHANNEL = get(handles.edit_synth_CHANNEL_name);
-    push_CHANNEL_configuration = get(handles.push_synth_CHANNEL_settings);
-    
-    channel1 = get(handles.menu_event_channel1);
-    channel2 = get(handles.menu_event_channel2);
-    check_save_image = get(handles.check_event_export_images);
-    push_parameter_settings = get(handles.push_event_settings);
-    buttonEventSelectSources = get(handles.buttonEventSelectSources);
-    buttonArtifactSelectSources = get(handles.buttonEventSelectSources);
-    
-    evt_method = get(handles.menu_event_method);
-    
-    spectrum = get(handles.pop_spectral_method);
-    
-    
-    %I should really consider implementing a for loop at this point....
-    
-    %the added Position and removal is to bypass a warning that pops because
-    %Matalb does not like the units field to follow the position field when
-    %initializing a uicontrol- notice that the copy is a lower case and thus
-    %different than the upper-cased Position name
-    edit_synth_CHANNEL = rmfield(edit_synth_CHANNEL,'Type');
-    edit_synth_CHANNEL = rmfield(edit_synth_CHANNEL,'Extent');
-    edit_synth_CHANNEL = rmfield(edit_synth_CHANNEL,'BeingDeleted');
-    edit_synth_CHANNEL.position = edit_synth_CHANNEL.Position;
-    edit_synth_CHANNEL = rmfield(edit_synth_CHANNEL,'Position');
-    
-    push_CHANNEL_configuration = rmfield(push_CHANNEL_configuration,'Type');
-    push_CHANNEL_configuration = rmfield(push_CHANNEL_configuration,'Extent');
-    push_CHANNEL_configuration = rmfield(push_CHANNEL_configuration,'BeingDeleted');
-    push_CHANNEL_configuration.position = push_CHANNEL_configuration.Position;
-    push_CHANNEL_configuration = rmfield(push_CHANNEL_configuration,'Position');
-    
-    check_save_image = rmfield(check_save_image,'Type');
-    check_save_image = rmfield(check_save_image,'Extent');
-    check_save_image = rmfield(check_save_image,'BeingDeleted');
-    check_save_image.position = check_save_image.Position;
-    check_save_image = rmfield(check_save_image,'Position');
-    
-    spectrum = rmfield(spectrum,'Type');
-    spectrum = rmfield(spectrum,'Extent');
-    spectrum = rmfield(spectrum,'BeingDeleted');
-    spectrum.position = spectrum.Position;
-    spectrum = rmfield(spectrum,'Position');
-    
-    channel1 = rmfield(channel1,'Type');
-    channel1 = rmfield(channel1,'Extent');
-    channel1 = rmfield(channel1,'BeingDeleted');
-    channel1.position = channel1.Position;
-    channel1 = rmfield(channel1,'Position');
-    
-    channel2 = rmfield(channel2,'Type');
-    channel2 = rmfield(channel2,'Extent');
-    channel2 = rmfield(channel2,'BeingDeleted');
-    channel2.position = channel2.Position;
-    channel2 = rmfield(channel2,'Position');
-    
-    buttonEventSelectSources = rmfield(buttonEventSelectSources,'Type');
-    buttonEventSelectSources = rmfield(buttonEventSelectSources,'Extent');
-    buttonEventSelectSources = rmfield(buttonEventSelectSources,'BeingDeleted');
-    buttonEventSelectSources.position = buttonEventSelectSources.Position;
-    buttonEventSelectSources = rmfield(buttonEventSelectSources,'Position');
-    
-    buttonArtifactSelectSources = rmfield(buttonArtifactSelectSources,'Type');
-    buttonArtifactSelectSources = rmfield(buttonArtifactSelectSources,'Extent');
-    buttonArtifactSelectSources = rmfield(buttonArtifactSelectSources,'BeingDeleted');
-    buttonArtifactSelectSources.position = buttonArtifactSelectSources.Position;
-    buttonArtifactSelectSources = rmfield(buttonArtifactSelectSources,'Position');
-    
-    push_parameter_settings = rmfield(push_parameter_settings,'Type');
-    push_parameter_settings = rmfield(push_parameter_settings,'Extent');
-    push_parameter_settings = rmfield(push_parameter_settings,'BeingDeleted');
-    push_parameter_settings.position = push_parameter_settings.Position;
-    push_parameter_settings = rmfield(push_parameter_settings,'Position');
-    
-    evt_method = rmfield(evt_method,'Type');
-    evt_method = rmfield(evt_method,'Extent');
-    evt_method = rmfield(evt_method,'BeingDeleted');
-    evt_method.position = evt_method.Position;
-    evt_method = rmfield(evt_method,'Position');
-    
-    GUI_TEMPLATE.edit_synth_CHANNEL = edit_synth_CHANNEL;
-    GUI_TEMPLATE.push_CHANNEL_configuration = push_CHANNEL_configuration;
-    GUI_TEMPLATE.check_save_image = check_save_image;
-    GUI_TEMPLATE.spectrum = spectrum;
-    GUI_TEMPLATE.channel1 = channel1;
-    GUI_TEMPLATE.channel2 = channel2;
-    GUI_TEMPLATE.evt_method = evt_method;
-    GUI_TEMPLATE.push_parameter_settings = push_parameter_settings;
-    GUI_TEMPLATE.num_synth_channels = 0;  %number of synthesized channels is zero at first
-    GUI_TEMPLATE.buttonEventSelectSources = buttonEventSelectSources;
-    GUI_TEMPLATE.buttonArtifactSelectSources = buttonArtifactSelectSources;
-    
-    add_button_pos = get(handles.push_add_event,'position');
-    
-    %I liked the distance between these two on the GUIDE display of the figure
-    %and would like to keep the same spacing for additional rows that are added
-    GUI_TEMPLATE.row_separation = add_button_pos(2)-evt_method.position(2);
-    GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC'};
-    % GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC','Coherence'};
-end
-
-function loadDetectionMethods()
-    %load up any available detection methods found in the detection_path
-    %(initially this was labeled '+detection' from the working path
-    
-    global MARKING;
-    global GUI_TEMPLATE;
-    
-    
-    if(isfield(MARKING.SETTINGS.VIEW,'detection_path'))
-        detection_inf = fullfile(MARKING.SETTINGS.VIEW.detection_path,'detection.inf');
-    else
-        detection_inf = fullfile('+detection','detection.inf');
-    end
-    
-    %this part is initialized for the first choice, which is 'none' - no
-    %artifact or event selected...
-    evt_label = 'none';
-    mfile = 'Error';
-    num_reqd_indices = 0;
-    param_gui = 'none';
-    batch_mode_label = '_';
-    
-    if(exist(detection_inf,'file'))
-        [loaded_mfile, loaded_evt_label, loaded_num_reqd_indices, loaded_param_gui, loaded_batch_mode_label] = textread(detection_inf,'%s%s%n%s%s','commentstyle','shell');
-        
-        evt_label = [{evt_label};loaded_evt_label];
-        mfile = [{mfile};loaded_mfile];
-        num_reqd_indices = [num_reqd_indices;loaded_num_reqd_indices];
-        param_gui = [{param_gui};loaded_param_gui];
-        batch_mode_label = [batch_mode_label; loaded_batch_mode_label];
-    end
-    
-    GUI_TEMPLATE.detection.labels = evt_label;
-    GUI_TEMPLATE.detection.mfile = mfile;
-    GUI_TEMPLATE.detection.reqd_indices = num_reqd_indices;
-    GUI_TEMPLATE.detection.param_gui = param_gui;
-    GUI_TEMPLATE.detection.batch_mode_label = batch_mode_label;
-    GUI_TEMPLATE.evt_method.String = evt_label;  %need this here so that newly created rows have these detection options available.
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-function settings_callback(hObject,~,~)
+function settings_callback(hObject,~)
     global GUI_TEMPLATE;
     global MARKING;
     
@@ -974,11 +1027,14 @@ function settings_callback(hObject,~,~)
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%
+% Called by artifact and detector event pulldown menus.
+function menu_event_callback(hObject,~,varargin)  
+    updateDetectorSelection(hObject, varargin{:});
+end
 
-function menu_event_callback(hObject,event_data,h_pop_channels,h_push_settings,h_buttonSelectSource)
+function updateDetectorSelection(h_detector_menu,h_pop_channels,h_push_settings,h_buttonSelectSource)
     global GUI_TEMPLATE;
-    choice = get(hObject,'value');
-    
+    choice = get(h_detector_menu,'value');  
     settings_gui = GUI_TEMPLATE.detection.param_gui{choice};
     
     userdata.choice = choice;
@@ -992,7 +1048,7 @@ function menu_event_callback(hObject,event_data,h_pop_channels,h_push_settings,h
         %want to avoid calling plist_editor, and rather call plist_batch_editor
         %here so that the appropriate settings can be made.
         if(strcmp(settings_gui,'plist_editor_dlg'))
-            set(h_push_settings,'userdata',userdata,'enable','on','callback',{@settings_callback,guidata(hObject)});
+            set(h_push_settings,'userdata',userdata,'enable','on','callback',@settings_callback);
         else
             set(h_push_settings,'enable','on','callback',settings_gui);
         end
@@ -1060,10 +1116,11 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 % --- Executes on button press in push_output_settings.
-function push_output_settings_Callback(hObject, eventdata, handles)
+function push_output_settings_Callback(hObject, ~)
     % hObject    handle to push_output_settings (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
+    handles = guidata(hObject);
     BATCH_PROCESS = handles.user.BATCH_PROCESS;
     
     settings = batch_output_settings_dlg(BATCH_PROCESS);
@@ -1079,16 +1136,16 @@ function push_output_settings_Callback(hObject, eventdata, handles)
     guidata(hObject,handles);
 end
 
-% --- Executes on selection change in pop_spectral_method.
-function pop_spectral_method_Callback(hObject, eventdata, channels_h, settings_h)
-    % hObject    handle to pop_spectral_method (see GCBO)
+% --- Executes on selection change in menu_spectral_method.
+function menu_spectral_method_Callback(hObject, eventdata, channels_h, settings_h)
+    % hObject    handle to menu_spectral_method (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
     global MARKING;
     PSD = MARKING.SETTINGS.PSD;
     MUSIC = MARKING.SETTINGS.MUSIC;
-    contents = cellstr(get(hObject,'String'));% returns pop_spectral_method contents as cell array
-    selection = contents{get(hObject,'Value')}; %returns selected item from pop_spectral_method
+    contents = cellstr(get(hObject,'String'));% returns menu_spectral_method contents as cell array
+    selection = contents{get(hObject,'Value')}; %returns selected item from menu_spectral_method
     
     switch(lower(selection))
         case 'none'
@@ -1287,18 +1344,19 @@ function edit_selectPlaylist_ButtonDownFcn(hObject, eventdata, handles)
     guidata(hObject,handles);
 end
 
-
-function push_importSetup_Callback(hObject, eventdata, handles)
-    fName = uigetfullfile({'*.exp', 'Batch export file (*.exp)';'*.*','All files'},'Select batch settings file');
-end
-
-function exportSetup(edfPathname, BATCH_PROCESS,playlist)
-    [FILENAME, PATHNAME, filterindex] = uiputfile('*.exp', '');
+function exportFilename = exportSetup(edfPathname, BATCH_PROCESS,playlist, suggestedFile)
+    exportFilename = [];
+    if(nargin<4)
+        suggestedFile = '';
+    end
+    [FILENAME, PATHNAME, filterindex] = uiputfile('*.exp', 'Select an export filename',suggestedFile);
     if(filterindex>0)
         fName = fullfile(PATHNAME,FILENAME);
         try
+            BATCH_PROCESS.configuration_file = fName;
             save(fName,'edfPathname','BATCH_PROCESS','playlist');
-            fprintf('Configuration saved to %s\n',fName)
+            fprintf('Configuration saved to %s\n',fName);
+            exportFilename = fName;
         catch me
             showME(me);
             fprintf('An error occured while trying to save the configuration to %s\n',fName);
@@ -1307,8 +1365,48 @@ function exportSetup(edfPathname, BATCH_PROCESS,playlist)
 end
 
 function push_exportSetup_Callback(hObject, eventdata, handles)
+
     [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles);
-    exportSetup(pathname, BATCH_PROCESS,playlist);   
+    configFilename = handles.user.BATCH_PROCESS.configuration_file;
+    configFilename = exportSetup(pathname, BATCH_PROCESS,playlist, configFilename);
+    if(exist(configFilename,'file'))
+       handles.user.BATCH_PROCESS.configuration_file = configFilename;
+       guidata(hObject,handles);
+    end
+end
+
+function importFile = selectImportConfigFile(importFile)
+    if(nargin<1)
+        importFile = '';
+    end
+    importFile = uigetfullfile({'*.exp', 'Batch export file (*.exp)';'*.*','All files'},'Select batch settings file',importFile);
+    if(~exist(importFile,'file'))        
+        importFile = [];
+    end
+end
+function push_importSetup_Callback(hObject, eventdata, handles)
+    configFile = selectImportConfigFile(handles.user.BATCH_PROCESS.configuration_file);
+    if(exist(configFile,'file'))
+        handles.user.BATCH_PROCESS.configuration_file = configFile;
+        guidata(hObject,handles);
+        relaunchWithImportFile(handles.figure1,configFile);
+    end
+end
+
+function relaunchWithImportFile(figureH,importFile)
+    global MARKING;
+    if(exist(importFile,'file'))
+        response = questdlg('The current configuration will shutdown now in order to load the import configuration file.  Do you want to continue?');
+        if(~isempty(response) && strcmpi(response,'yes'))
+            % in order to save settings between use.
+            if(ishandle(figureH))
+                handles = guidata(figureH);
+                MARKING.SETTINGS.BATCH_PROCESS = handles.user.BATCH_PROCESS; %need to return this to the global for now            
+                delete(figureH);
+            end
+            batch_run('importfile',importFile);
+        end
+    end    
 end
 
 % --- Executes during object creation, after setting all properties.

@@ -637,7 +637,9 @@ classdef  CLASS_settings < handle
                         obj.PSD.freq_min = 0; %display min
                         obj.PSD.freq_max = 30; %display max                        
                     case 'BATCH_PROCESS'
-                        obj.BATCH_PROCESS.edf_folder = '.'; %the edf folder to do a batch job on.
+                        obj.BATCH_PROCESS.edf_folder = '.'; %the edf folder to do a batch job on.                        
+                        obj.BATCH_PROCESS.configuration_file =''; % configuration
+                        obj.BATCH_PROCESS.playlist_file = '';                         
                         obj.BATCH_PROCESS.output_path.parent = 'output';
                         obj.BATCH_PROCESS.output_path.roc = 'ROC';
                         obj.BATCH_PROCESS.output_path.power = 'PSD';
@@ -679,6 +681,7 @@ classdef  CLASS_settings < handle
                         obj.BATCH_PROCESS.images.limit_flag = 1;
                         obj.BATCH_PROCESS.images.buffer_sec = 0.5;
                         obj.BATCH_PROCESS.images.buffer_flag = 1;
+                        
                         
                         %export
                         obj.BATCH_PROCESS.export.edf_folder = '.'; %the edf folder to do a batch job on.
