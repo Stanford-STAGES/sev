@@ -66,16 +66,16 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
             handles.menu_synth_CHANNEL_channel1,handles.edit_synth_CHANNEL_name});
         
         set(handles.menu_event_method,'string',GUI_TEMPLATE.detection.labels,'callback',...
-            {@menu_event_callback,[handles.menu_event_channel1,handles.menu_event_channel2],handles.push_event_settings,handles.buttonEventSelectSources});
+            {@menu_event_callback,handles.check_event_export_images,[handles.menu_event_channel1,handles.menu_event_channel2],handles.push_event_settings,handles.buttonEventSelectSources});
         
         userdata.channel_h = handles.menu_psd_channel;
         userdata.settings_h = handles.push_psd_settings;
         
         set(handles.menu_spectral_method,'userdata',userdata,'callback',{@menu_spectral_method_Callback,handles.menu_psd_channel,handles.push_psd_settings},...
-            'enable','off','string',GUI_TEMPLATE.spectrum_labels);
+            'enable','off');
         
         set(handles.menu_artifact_method,'string',GUI_TEMPLATE.detection.labels,'callback',...
-            {@menu_event_callback,[handles.menu_artifact_channel1,handles.menu_artifact_channel2],handles.push_artifact_settings,handles.buttonArtifactSelectSources});
+            {@menu_event_callback,handles.check_artifact_export_images,[handles.menu_artifact_channel1,handles.menu_artifact_channel2],handles.push_artifact_settings,handles.buttonArtifactSelectSources});
         
         set(handles.push_psd_settings,'enable','off','userdata',MARKING.SETTINGS.PSD);
         
@@ -117,6 +117,8 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
                 BATCH_PROCESS.configuration_file = params.importFile;
                 handles.user.BATCH_PROCESS = BATCH_PROCESS;
                 handles.user.PSD = BATCH_PROCESS.PSD_settings{1};
+                handles.user.MUSIC = BATCH_PROCESS.MUSIC_settings{1};
+                
                 setEDFPathname(handles,edfPathname);
                 setEDFPlayList(handles,playlist);
                 checkPathForEDFs(handles,playlist);
@@ -130,26 +132,46 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
                 batchImport.artifact_settings.panelTag = 'panel_artifact';
                 batchImport.PSD_settings.importFcn = @addPSDRow;                
                 batchImport.PSD_settings.panelTag = 'panel_psd';
+                
+                % Overly complicated to support music and psd as separate
+                % groups right now.  Will be better t adjust code at some
+                % point and include spectral method selection as a saved
+                % parameter instead of continuing down this path...
+                %                 batchImport.MUSIC_settings.importFcn = @addPSDRow;
+                %                 batchImport.MUSIC_settings.panelTag = 'panel_psd';
+                
                 importFields=fieldnames(batchImport);
                 
                 for n=1:numel(importFields)
                     fn = importFields{n};
-                    
+                    optionalSelection = {};
+                    if(strcmpi(fn,'music_settings'))
+                        optionalSelection = {'MUSIC'};
+                    end
                     curStruct = BATCH_PROCESS.(fn);
                     curImport = batchImport.(fn);
                     if(iscell(curStruct) && ~isempty(curStruct))
-                        configurePanelRow(handles.user.(curImport.panelTag){1},curStruct{1});
+                        
+                        configurePanelRow(handles.user.(curImport.panelTag){1},curStruct{1},optionalSelection{:});
                         for t=2:numel(curStruct)                            
                             % add rows as necessary
                             addHandles = feval(curImport.importFcn,handles);                            
-                            configurePanelRow(addHandles,curStruct{t});
+                            configurePanelRow(addHandles,curStruct{t},optionalSelection{:});
                         end
                     end
                     
                 end
             end
+        else
+            h = handles.user.panel_events{1};
+            updateDetectorSelection(h(1),h(2),h(3:4),h(6),h(5));
+            h = handles.user.panel_artifact{1};
+            updateDetectorSelection(h(1),h(2),h(3:4),h(6),h(5));
+            h = handles.user.panel_psd{1};
+            updateSpectralSelection(h(1),h(2),h(3));        
         end
         
+       
         % Choose default command line output for batch_run
         handles.output = hObject;
         
@@ -237,7 +259,7 @@ function addedHandles = resizeForAddedRow(handles,resized_panel_h)
         
         h_check_save_img = uicontrol(GUI_TEMPLATE.check_save_image,'parent',resized_panel_h);
         h_params=uicontrol(GUI_TEMPLATE.push_parameter_settings,'parent',resized_panel_h);
-        h_menu = uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,[hc1,hc2],h_params,buttonEventSelectSources});
+        h_menu = uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,h_check_save_img,[hc1,hc2],h_params,buttonEventSelectSources});
         rowHandles = [h_menu, h_check_save_img, hc1, hc2, buttonEventSelectSources, h_params];
     end
     
@@ -517,7 +539,6 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
             end
         end
     end
-    
     synth_channel_structs = synth_channel_structs(synth_indices);
     synth_channel_names = synth_channel_names(synth_indices);
     
@@ -766,7 +787,7 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
         %for artifacts, only apply the first step in each case, that is the
         %start value given
         if(~isempty(pBatchStruct))
-            for key_ind=1:numel(pBatchStruct);
+            for key_ind=1:numel(pBatchStruct)
                 params.(pBatchStruct{key_ind}.key)=pBatchStruct{key_ind}.start;
             end
         else
@@ -804,7 +825,9 @@ function handles = createGlobalTemplate(handles)
     %uses the intial panel entries created with GUIDE to serve as templates for
     %adding more entries later.
     global GUI_TEMPLATE;
-    
+    GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC'};
+    set(handles.menu_spectral_method,'string',GUI_TEMPLATE.spectrum_labels);
+    set(handles.menu_psd_channel,'enable','on','visible','off');
     
     handles.user.panel_synth_CHANNEL = {[handles.menu_synth_CHANNEL_channel1;
         handles.edit_synth_CHANNEL_name
@@ -852,7 +875,7 @@ function handles = createGlobalTemplate(handles)
     %and would like to keep the same spacing for additional rows that are added
     add_button_pos = get(handles.push_add_event,'position'); 
     GUI_TEMPLATE.row_separation = add_button_pos(2)-src.evt_method.Position(2);
-    GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC'};
+ 
     % GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC','Coherence'};
 end
 
@@ -896,26 +919,35 @@ function loadDetectionMethods()
     GUI_TEMPLATE.evt_method.String = evt_label;  %need this here so that newly created rows have these detection options available.
 end
 
-function configurePanelRow(rowHandles, paramStruct)
+function configurePanelRow(rowHandles, paramStruct, methodSelection)
     if(~isempty(paramStruct))
         panelTag = get(get(rowHandles(1),'parent'),'tag');
         switch lower(panelTag)
             case {'panel_events','panel_artifact'}
                 % 
-                setMenuSelection(rowHandles(1),paramStruct.method_label);
-                updateDetectorSelection(rowHandles(1),rowHandles(3:4),rowHandles(6),rowHandles(4));
+                if(nargin<3)
+                    methodSelection = paramStruct.method_label;
+                end
+                setMenuSelection(rowHandles(1),methodSelection);
+                updateDetectorSelection(rowHandles(1),rowHandles(2),rowHandles(3:4),rowHandles(6),rowHandles(5));
                 set(rowHandles(2),'value',paramStruct.save2img);
                 setMenuSelection(rowHandles(3),paramStruct.channel_labels(1));
                 if(numel(paramStruct.channel_labels)>1)
                     setMenuSelection(rowHandles(4),paramStruct.channel_labels(2));
                     set(rowHandles(4),'visible','on','enable','on');
                 end
-                set(rowHandles(6),'userdata',paramStruct.params);
+                set(rowHandles(6),'userdata',paramStruct.params);                
                
-            case 'psd'
-                
-            case 'panel_synth_channel'
-                
+            case 'panel_psd'
+                if(nargin<3)
+                    methodSelection = 'PSD';
+                end
+                setMenuSelection(rowHandles(1),methodSelection);
+                paramStruct.channel_labels = paramStruct.channel_labels{1};
+                updateSpectralSelection(rowHandles(1),rowHandles(2),rowHandles(3));
+                setMenuSelection(rowHandles(2),paramStruct.channel_labels);
+                set(rowHandles(3),'userdata',paramStruct);                
+            case 'panel_synth_channel'                
                 
             otherwise
         end
@@ -979,7 +1011,10 @@ function push_add_event_Callback(hObject, eventdata, handles)
     % hObject    handle to push_add_event (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
-    addEventRow(handles);
+    addedH = addEventRow(handles);
+    updateDetectorSelection(addedH(1),addedH(2),addedH(3:4),addedH(6),addedH(5));
+    
+
 end
 
 % --- Executes on button press in push_add_psd.
@@ -987,14 +1022,16 @@ function push_add_psd_Callback(hObject, eventdata, handles)
     % hObject    handle to push_add_psd (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
-    addPSDRow(handles);
+    addedH = addPSDRow(handles);
+    updateSpectralSelection(addedH(1),addedH(2),addedH(3));
 end
 % --- Executes on button press in push_add_artifact.
 function push_add_artifact_Callback(hObject, eventdata, handles)
     % hObject    handle to push_add_artifact (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
-    addArtifactRow(handles);
+    addedH = addArtifactRow(handles);
+    updateDetectorSelection(addedH(1),addedH(2),addedH(3:4),addedH(6),addedH(5));
 end
 
 function settings_callback(hObject,~)
@@ -1032,7 +1069,7 @@ function menu_event_callback(hObject,~,varargin)
     updateDetectorSelection(hObject, varargin{:});
 end
 
-function updateDetectorSelection(h_detector_menu,h_pop_channels,h_push_settings,h_buttonSelectSource)
+function updateDetectorSelection(h_detector_menu,h_img_check, h_pop_channels,h_push_settings,h_buttonSelectSource)
     global GUI_TEMPLATE;
     choice = get(h_detector_menu,'value');  
     settings_gui = GUI_TEMPLATE.detection.param_gui{choice};
@@ -1044,7 +1081,9 @@ function updateDetectorSelection(h_detector_menu,h_pop_channels,h_push_settings,
     
     if(strcmp(settings_gui,'none'))
         set(h_push_settings,'enable','off','callback',[]);
+        set(h_img_check,'visible','off');
     else
+        set(h_img_check,'visible','on');
         %want to avoid calling plist_editor, and rather call plist_batch_editor
         %here so that the appropriate settings can be made.
         if(strcmp(settings_gui,'plist_editor_dlg'))
@@ -1137,36 +1176,40 @@ function push_output_settings_Callback(hObject, ~)
 end
 
 % --- Executes on selection change in menu_spectral_method.
-function menu_spectral_method_Callback(hObject, eventdata, channels_h, settings_h)
+function menu_spectral_method_Callback(hObject, ~, varargin)
     % hObject    handle to menu_spectral_method (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
+    updateSpectralSelection(hObject, varargin{:});
+end
+
+function updateSpectralSelection(menu_selection_h, channels_h, settings_h)
     global MARKING;
     PSD = MARKING.SETTINGS.PSD;
     MUSIC = MARKING.SETTINGS.MUSIC;
-    contents = cellstr(get(hObject,'String'));% returns menu_spectral_method contents as cell array
-    selection = contents{get(hObject,'Value')}; %returns selected item from menu_spectral_method
-    
-    switch(lower(selection))
+%     contents = cellstr(get(spectral_menu_h,'String'));% returns menu_spectral_method contents as cell array
+%     selection = contents{get(spectral_menu_h,'Value')}; %returns selected item from menu_spectral_method
+    spectralSelection = getSelectedMenuString(menu_selection_h);
+    switch(lower(spectralSelection))
         case 'none'
             %disable channel selection
             %disable settings
-            set(channels_h,'enable','off');
+            set(channels_h,'visible','off');
             set(settings_h,'enable','off');
         case 'psd'
             %enable channel selection
             %enable settings
-            set(channels_h,'enable','on');
+            set(channels_h,'visible','on');
             set(settings_h,'enable','on','callback',@push_psd_settings_Callback,'userdata',PSD);
         case 'music'
             %enable  channel selection
             %disable settings
-            set(channels_h,'enable','on');
+            set(channels_h,'visible','on');
             set(settings_h,'enable','off','userdata',MUSIC);
         case 'coherence'
             %enable  channel selection
             %disable settings
-            set(channels_h,'enable','on');
+            set(channels_h,'visible','on');
             set(settings_h,'enable','off','userdata',[]);
         otherwise
             disp 'Selection not handled';
@@ -1264,7 +1307,19 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
     global MARKING;
     % in order to save settings between use.
     try
-        MARKING.SETTINGS.BATCH_PROCESS = handles.user.BATCH_PROCESS; %need to return this to the global for now
+        % Currently, the SEV save settings module only saves linear
+        % structures.  It cannot handle structures with cell values of
+        % structures, like we have here, so we are going to adjust for this
+        % now.
+        BATCH_PROCESS = handles.user.BATCH_PROCESS;
+        multipleEntryFields = {'PSD_settings','event_settings','artifact_settings','MUSIC_settings','synth_CHANNEL'};
+        for m=1:numel(multipleEntryFields)
+            fn = multipleEntryFields{m};
+            if(isfield(BATCH_PROCESS,fn) && iscell(BATCH_PROCESS.(fn)) && numel(BATCH_PROCESS.(fn)>0))
+                BATCH_PROCESS.(fn) = BATCH_PROCESS.(fnd){1};
+            end
+        end
+        MARKING.SETTINGS.BATCH_PROCESS = BATCH_PROCESS; %need to return this to the global for now
         
         if(ishandle(MARKING.figurehandle.sev))
             MARKING.initializeView(); %this currently deletes any other MATLAB figures that are up.

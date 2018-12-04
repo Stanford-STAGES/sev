@@ -50,9 +50,9 @@ if(isempty(varargin))
     end
 
 else
-    field = getfield(root,varargin{:});
+    field = getfield(root,varargin{:});    
     if(isstruct(field))
-        fields = fieldnames(getfield(root,varargin{:}));
+        fields = fieldnames(field);
         for k=1:numel(fields)
             saveStruct(fid,root,varargin{:},fields{k});
         end
