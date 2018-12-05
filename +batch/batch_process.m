@@ -61,21 +61,21 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
         
         if(~isdir(BATCH_PROCESS.output_path.current))
             mkdir(BATCH_PROCESS.output_path.current);
-        end;
+        end
         
         full_roc_path = fullfile(BATCH_PROCESS.output_path.current,BATCH_PROCESS.output_path.roc);
         if(~isdir(full_roc_path))
             mkdir(full_roc_path);
-        end;
+        end
         
         full_psd_path = fullfile(BATCH_PROCESS.output_path.current,BATCH_PROCESS.output_path.power);
         if(~isdir(full_psd_path))
             mkdir(full_psd_path);
-        end;
+        end
         full_events_path = fullfile(BATCH_PROCESS.output_path.current,BATCH_PROCESS.output_path.events);
         if(~isdir(full_events_path))
             mkdir(full_events_path);
-        end;
+        end
         full_events_images_path = fullfile(BATCH_PROCESS.output_path.current,BATCH_PROCESS.output_path.events,BATCH_PROCESS.output_path.images);
         if(~isdir(full_events_images_path))
             mkdir(full_events_images_path);
@@ -83,7 +83,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
         full_artifacts_path = fullfile(BATCH_PROCESS.output_path.current,BATCH_PROCESS.output_path.artifacts);
         if(~isdir(full_artifacts_path))
             mkdir(full_artifacts_path);
-        end;
+        end
         full_artifacts_images_path = fullfile(BATCH_PROCESS.output_path.current,BATCH_PROCESS.output_path.artifacts,BATCH_PROCESS.output_path.images);
         if(~isdir(full_artifacts_images_path))
             mkdir(full_artifacts_images_path);
@@ -129,7 +129,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                 end
             else
                 fprintf(log_fid,'No event detectors were run with this batch job.\r\n');
-            end;
+            end
             if(numel(BATCH_PROCESS.artifact_settings)>0)
                 fprintf(log_fid,'The following artifact detectors were run with this batch job.\r\n');
                 
@@ -157,7 +157,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                 
             else
                 fprintf(log_fid,'No artifact detectors were run with this batch job.\r\n');
-            end;
+            end
             
             if(numel(BATCH_PROCESS.PSD_settings)>0)
                 fprintf(log_fid,'Power spectral density by periodogram analysis was conducted with the following configuration(s):\r\n');
@@ -217,7 +217,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
         else
             disp('No log file created for this run.  Choose settings to change this, and check the log checkbox if you want to change this.');
             BATCH_PROCESS.start_time = ' ';
-        end;
+        end
         
         event_settings = BATCH_PROCESS.event_settings;
         artifact_settings = BATCH_PROCESS.artifact_settings;
@@ -393,12 +393,16 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                         cur_filename = file_list(i).name;
                         
                         skip_file = false;
-                        
+                        [~,filePrefix,~] = fileparts(cur_filename);
                         %                 BATCH_PROCESS.cur_filename = cur_filename;
-                        stages_filename = fullfile(pathname,[cur_filename(1:end-3) 'STA']);
+                        stages_filename = fullfile(pathname,[filePrefix '.STA']);
                         
                         if(~exist(stages_filename,'file'))
-                            stages_filename = fullfile(pathname,[cur_filename(1:end-3) 'evts']);
+                            stages_filename = fullfile(pathname,[filePrefix '.evts']);
+                        end
+                        
+                        if(~exist(stages_filename,'file'))
+                            stages_filename = fullfile(pathname,[filePrefix '_hypnogram.txt']); % dreem file convention
                         end
                         
                         %require stages filename to exist.
@@ -409,8 +413,8 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                             %%%%%%%%%%%%%%%%%%%%%REVIEW%%%%%%%%%%%%%%%%%%%%%%%%
                             %                     if(BATCH_PROCESS.output_files.log_checkbox)
                             %                         fprintf(log_fid,'%s not found!  This EDF will be skipped.\r\n',stages_filename);
-                            %                     end;
-                        end;
+                            %                     end
+                        end
                         
                         if(~skip_file)
                             
@@ -632,7 +636,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                             %                     if(BATCH_PROCESS.output_files.statistics_checkbox) %artifact statistics
                             % %                         save_art_stats_Callback(hObject, eventdata, handles);
                             %                           batch.saveArtifactandStageStatistics();
-                            %                     end;
+                            %                     end
                             for k = 1:numel(parBATCH_PROCESS.PSD_settings)
                                 channel_label = parBATCH_PROCESS.PSD_settings{k}.channel_labels{:};
                                 channel_index = parBATCH_PROCESS.PSD_settings{k}.channel_indices;
@@ -652,15 +656,15 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                 if(~isempty(fopen(log_fid)))
                                     fprintf(log_fid,'%s . . . completed successfully at %s\r\n',file_list(i).name,datestr(now));
                                 end
-                            end;
+                            end
                             
                         else
                             if(BATCH_PROCESS.output_files.log_checkbox)
                                 %                         fprintf(log_fid,'%s . . . NOT PROCESSED (see notes above)\r\n',file_list(i).name);
-                            end;
+                            end
                             
                             files_skipped(i) = true;
-                        end;
+                        end
                         files_completed(i) = true;
                         elapsed_dur_sec = toc(tStart);
                         fprintf('File %d of %d (%0.2f%%) Completed in %0.2f seconds\n',i,file_count,i/file_count*100,elapsed_dur_sec);
@@ -729,7 +733,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                 
                 files_skipped(i) = true;
             end %end if not batch_process.cancelled
-        end; %end for all files
+        end %end for all files
         
         %     matlabpool close;
         
@@ -743,7 +747,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
         
         if(ishandle(waitHandle))
             waitbar(100,waitHandle,finish_str);
-        end;
+        end
         
         if(BATCH_PROCESS.output_files.log_checkbox)
             if(~isempty(fopen(log_fid)))
@@ -776,16 +780,16 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                 
                 clipboard('copy',skipped_files(:)'); %make it a column (1 row) vector
                 disp([num2str(numel(selections)),' filenames copied to the clipboard.']);
-            end;
+            end
         else
             msgbox(message,'Completed');
         end
         
         if(exist('waitHandle','var')&&ishandle(waitHandle))
             delete(waitHandle(1));
-        end;
+        end
         
     else
         disp 'nothing selected'
-    end;
+    end
 end

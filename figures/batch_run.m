@@ -117,7 +117,7 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
                 BATCH_PROCESS.configuration_file = params.importFile;
                 handles.user.BATCH_PROCESS = BATCH_PROCESS;
                 handles.user.PSD = BATCH_PROCESS.PSD_settings{1};
-                handles.user.MUSIC = BATCH_PROCESS.MUSIC_settings{1};
+                % handles.user.MUSIC = BATCH_PROCESS.MUSIC_settings{1};
                 
                 setEDFPathname(handles,edfPathname);
                 setEDFPlayList(handles,playlist);
@@ -539,6 +539,7 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
             end
         end
     end
+    
     synth_channel_structs = synth_channel_structs(synth_indices);
     synth_channel_names = synth_channel_names(synth_indices);
     
@@ -827,7 +828,9 @@ function handles = createGlobalTemplate(handles)
     global GUI_TEMPLATE;
     GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC'};
     set(handles.menu_spectral_method,'string',GUI_TEMPLATE.spectrum_labels);
-    set(handles.menu_psd_channel,'enable','on','visible','off');
+    set([handles.menu_psd_channel
+        handles.menu_event_channel1
+        handles.menu_event_channel2],'enable','on','visible','off');
     
     handles.user.panel_synth_CHANNEL = {[handles.menu_synth_CHANNEL_channel1;
         handles.edit_synth_CHANNEL_name
@@ -936,7 +939,10 @@ function configurePanelRow(rowHandles, paramStruct, methodSelection)
                     setMenuSelection(rowHandles(4),paramStruct.channel_labels(2));
                     set(rowHandles(4),'visible','on','enable','on');
                 end
-                set(rowHandles(6),'userdata',paramStruct.params);                
+                % userdata is expected to be a struct with the field names
+                % 'pBatchStruct' and 'rocStruct' so hold off on these for
+                % now.  Default is to load settings from .plist file.
+                % set(rowHandles(6),'userdata',paramStruct.params);
                
             case 'panel_psd'
                 if(nargin<3)
@@ -995,9 +1001,9 @@ function push_run_Callback(hObject, eventdata, handles)
     %
     %This function can only be called when there a valid directory (one which
     %contains EDF files) has been selected.
-
+    import batch.*;
     [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles);
-    batch_process(pathname,BATCH_PROCESS,playlist);
+    batch.batch_process(pathname,BATCH_PROCESS,playlist);
     % warndlg({'you are starting the batch mode with the following channels',BATCH_PROCESS.PSD_settings});
     
     %goal two - run the batch mode with knowledge of the PSD channel only...
@@ -1155,7 +1161,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 % --- Executes on button press in push_output_settings.
-function push_output_settings_Callback(hObject, ~)
+function push_output_settings_Callback(hObject, varargin)
     % hObject    handle to push_output_settings (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
