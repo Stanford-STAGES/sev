@@ -7,6 +7,6 @@ function sev_pathname = sev_pathsetup()
     
     sev_pathname = fileparts(mfilename('fullpath'));
     
-    subPaths = {'auxiliary','utility','classes','figures','widgets','external/widgets'};
+    subPaths = {'auxiliary','utility','classes','figures','widgets','external/widgets','external/utility'};
     cellfun(@(x)addpath(fullfile(sev_pathname,x)),subPaths);
 end

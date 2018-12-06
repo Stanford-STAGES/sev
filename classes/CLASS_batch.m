@@ -338,16 +338,18 @@ classdef CLASS_batch < handle
                 '\nFiles Completed:\t%u',...
                 '\nTime elapsed:\t%s'],num_files_attempted,num_files_skipped,num_files_failed,num_files_completed,elapsed_time);
 
-            
+            set(0,'defaultUicontrolFontsize',11);
             if(num_files_attempted~=num_files_completed)
                 skipped_filenames = filename_list(files_skipped|files_failed);
-                [selections,clicked_ok]= listdlg('PromptString',summaryText,'Name','Batch Completed',...
-                    'OKString','Copy to Clipboard','CancelString','Close','ListString',skipped_filenames);
-                
+                listHeight = min(numel(skipped_filenames)*12,120)+24;  % 12 works for fontsize 10, 13 for fontsize 11, and so on.
+                listWidth = 210;
+                [selections,clicked_ok]= listdlg('PromptString',str2cell(summaryText),'Name','Batch Completed',...
+                    'OKString','Copy to Clipboard','CancelString','Close','ListString',skipped_filenames,'ListSize',[listWidth, listHeight]);
+                                
                 % send to clipboard as a one row vector
                 if(clicked_ok)
                     %char(10) is newline
-                    skipped_files = [char(skipped_filenames(selections)),repmat(char(10),numel(selections),1)];
+                    skipped_files = [char(skipped_filenames(selections)),repmat(newline,numel(selections),1)];
                     skipped_files = skipped_files'; %filename length X number of files
                     
                     clipboard('copy',skipped_files(:)'); %make it a 1 row vector

@@ -393,17 +393,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                         cur_filename = file_list(i).name;
                         
                         skip_file = false;
-                        [~,filePrefix,~] = fileparts(cur_filename);
-                        %                 BATCH_PROCESS.cur_filename = cur_filename;
-                        stages_filename = fullfile(pathname,[filePrefix '.STA']);
-                        
-                        if(~exist(stages_filename,'file'))
-                            stages_filename = fullfile(pathname,[filePrefix '.evts']);
-                        end
-                        
-                        if(~exist(stages_filename,'file'))
-                            stages_filename = fullfile(pathname,[filePrefix '_hypnogram.txt']); % dreem file convention
-                        end
+                        stages_filename = CLASS_codec.getStagesFilenameFromEDF(edf_fullfilename);
                         
                         %require stages filename to exist.
                         if(~exist(stages_filename,'file'))

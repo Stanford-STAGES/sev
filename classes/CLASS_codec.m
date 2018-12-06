@@ -169,16 +169,22 @@ classdef CLASS_codec < handle
         %> @retval edf_name edf filename sans pathname.
         % ======================================================================
         function [stages_filename, edf_name] = getStagesFilenameFromEDF(edf_fullfilename)
-            [edf_path,edf_name,edf_ext] = fileparts(edf_fullfilename);
-            stages_filename = fullfile(edf_path,strcat(edf_name,'.STA'));
+            [pathname,edf_name,edf_ext] = fileparts(edf_fullfilename);
+            stages_filename = fullfile(pathname,[edf_name,'.STA']);
             
             if(~exist(stages_filename,'file'))
-                stages_filename = fullfile(edf_path,strcat(edf_name,'.EVTS'));
+                stages_filename = fullfile(pathname,[edf_name,'.EVTS']);
                 if(~exist(stages_filename,'file'))
-                    stages_filename = [];
+                    stages_filename = fullfile(pathname,[edf_name, '.evts']);
+                           
+                    if(~exist(stages_filename,'file'))
+                        stages_filename = fullfile(pathname,[edf_name, '_hypnogram.txt']); % dreem file convention
+                    else
+                        stages_filename = [];
+                    end
                 end
             end  
-            edf_name = strcat(edf_name,edf_ext);
+            edf_name = [edf_name,edf_ext];
         end
         
         % ======================================================================

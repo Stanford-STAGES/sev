@@ -2,3 +2,6 @@
 export_selected_channels, Selected Channels, plist_editor_dlg
 export_candidate_eyesclosed, Candidate eyes closed, plist_editor_dlg
 export_biocals_eyesclosed, Alpha Power, plist_editor_dlg
+export_psd_files, Power Spectral Density, plist_editor_dlg
+export_deidentify, Deidentify, plist_editor_dlg
+
