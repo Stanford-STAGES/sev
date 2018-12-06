@@ -330,11 +330,14 @@ classdef CLASS_codec < handle
         
             if(exist(exportInfFullFilename,'file'))
                 fid = fopen(exportInfFullFilename,'r');
-                scanCell = textscan(fid,'%s %s %s','headerlines',1,'delimiter',',');
+                % #MATLAB_filename,  Label, Settings Editor, Requires, Description
+                scanCell = textscan(fid,'%s %s %s %s %s','headerlines',1,'delimiter',',');
                 fclose(fid);
                 exportMethodsStruct.mfilename = scanCell{1};
-                exportMethodsStruct.description = scanCell{2};
+                exportMethodsStruct.label = scanCell{2};
                 exportMethodsStruct.settingsEditor = scanCell{3};
+                exportMethodsStruct.requires = scanCell{4};
+                exportMethodsStruct.description = scanCell{5};                
             end
             
         end

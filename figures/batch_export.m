@@ -86,12 +86,11 @@ function initializeSettings(hObject)
         handles.button_selectChannels],'enable','off');
     set([handles.radio_channelsAll;
         handles.radio_channelsSome],'backgroundcolor',bgColor);
-    
    
     % export methods
     set([handles.push_method_settings
         handles.menu_export_method],'enable','off');
-    set(handles.menu_export_method,'string',handles.user.methodsStruct.description,'value',1);
+    set(handles.menu_export_method,'string',handles.user.methodsStruct.label,'value',1,'tooltipstring',handles.user.methodsStruct.description{1},'fontsize',12);
     
     try
         exportPath = handles.user.settings.output_folder;
@@ -119,7 +118,7 @@ function initializeCallbacks(hObject)
 	set(handles.edit_selectPlayList,'callback',{@edit_selectPlaylist_ButtonDownFcn,guidata(hObject)});
     set(handles.button_selectChannels,'callback',@selectChannels_Callback);
     set(handles.push_method_settings,'callback',@push_exportMethodSettings_Callback);
-    set(handles.menu_export_method,'callback',@push_exportMethodChangeCb);
+    set(handles.menu_export_method,'callback',@menu_exportMethodChangeCb);
     set(handles.edit_selectPlayList,'buttondownfcn',{@edit_selectPlayList_ButtonDownFcn,guidata(hObject)});
     set(handles.push_export_directory,'callback',{@push_export_directory_Callback,guidata(hObject)});
     set(handles.push_start,'callback',{@push_start_Callback,guidata(hObject)});
@@ -133,11 +132,12 @@ end
 
 function setExportMethodIndex(anyH)
     handles = guidata(anyH);
-    handles.user.methodSelectionIndex = getExportMethodIndex(anyH);
+    handles.user.methodSelectionIndex = getExportMethodIndex(anyH);    
+    set(handles.menu_export_method,'tooltipstring',handles.user.methodsStruct.description{handles.user.methodSelectionIndex});    
     guidata(anyH, handles);
 end
 
-function push_exportMethodChangeCb(hObject, ~)
+function menu_exportMethodChangeCb(hObject, ~)
     setExportMethodIndex(hObject);
 end
 
@@ -154,27 +154,26 @@ end
 function methodStructs =  getMethodStructs(anyH)
     handles = guidata(anyH);
     methodStructs = handles.user.methodsStruct;
-    methodStructs.infFilename = handles.user.exportInfFilename;
-    
+    methodStructs.infFilename = handles.user.exportInfFilename;    
 end
 
-function push_exportMethodSettings_Callback(hObject,varargin)
-    
+function push_exportMethodSettings_Callback(hObject,varargin)    
     settings = getMethodSettingsStruct(hObject);
-    feval(settings.editor,settings.exportMethod, settings.infFilename); %, settings.curSettings);
-    
+    feval(settings.editor,settings.exportMethod, settings.infFilename); %, settings.curSettings);    
 end
 
 % --- Outputs from this function are returned to the command line.
-function varargout = batch_export_OutputFcn(hObject, eventdata, handles) 
-% varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Get default command line output from handles structure
-varargout{1} = handles.user.settings;
-delete(hObject);
+function varargout = batch_export_OutputFcn(hObject, ~, handles)     
+    % Get default command line output from handles structure
+    try
+        
+        varargout{1} = handles.user.settings;
+        
+    catch me        
+        showME(me);
+        varargout{1} = [];
+    end
+    delete(hObject);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -399,7 +398,7 @@ function process_export(exportSettings)
                 studyInfoStruct.edf_filename = edf_fullfilenames{i};
                 [studyInfoStruct.stages_filename, studyInfoStruct.edf_name] = CLASS_codec.getStagesFilenameFromEDF(studyInfoStruct.edf_filename);
                 
-                [~,studyInfoStruct.study_name,studyInfoStruct.study_ext] = fileparts(studyInfoStruct.edf_filename);
+                [~, studyInfoStruct.study_name, studyInfoStruct.study_ext] = fileparts(studyInfoStruct.edf_filename);
                 files_attempted(i)=1;
                 status = sprintf('%s (%i of %i)',studyInfoStruct.edf_name,i,file_count);
                 waitbar(i/(file_count+1),waitbarH,status);
@@ -410,22 +409,20 @@ function process_export(exportSettings)
                     status = sprintf('%s (%i of %i)\nStage file not found!  Skipping!',studyInfoStruct.edf_name,i,file_count);
                     waitbar(i/(file_count+1),waitbarH,status);
                 else
-                    
-                    
-                    if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels'))
-                        status = sprintf('%s (%i of %i)',studyInfoStruct.study_name,i,file_count);
-                        waitbar(i/(file_count+0.9),waitbarH,status);
-                        
-                        fullDestFile = fullfile(exportSettings.exportPathname,[studyInfoStruct.study_name,studyInfoStruct.study_ext]);
-                        
-                        didExport = CLASS_converter.writeLiteEDF(studyInfoStruct.edf_filename,fullDestFile,exportSettings.channelSelection.source); %,exportSamplerate);
-                        if(didExport)
-                            files_completed(i) = true;
+                    didExport = false;
+                    if(strcmpi('filename',studyInfoStruct.requires))
+                        if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels'))
+                            status = sprintf('%s (%i of %i)',studyInfoStruct.study_name,i,file_count);
+                            waitbar(i/(file_count+0.9),waitbarH,status);
+                            
+                            fullDestFile = fullfile(exportSettings.exportPathname,[studyInfoStruct.study_name,studyInfoStruct.study_ext]);
+                            
+                            didExport = CLASS_converter.writeLiteEDF(studyInfoStruct.edf_filename,fullDestFile,exportSettings.channelSelection.source); %,exportSamplerate);
                         else
-                            files_failed(i) = true;
+                            didExport = CLASS_converter.exportFromFile(studyInfoStruct.edf_filename,exportSettings.methodStruct,stagesStruct,studyInfoStruct);
                         end
-                        
                     else
+                        
                         %% Load header
                         studyInfoStruct.edf_header = loadEDF(studyInfoStruct.edf_filename);
                         status = sprintf('%s (%i of %i)\nLoading hypnogram (%s)',studyInfoStruct.edf_name,i,file_count,studyInfoStruct.stages_filename);
@@ -466,13 +463,16 @@ function process_export(exportSettings)
                             save(studyInfoStruct.saveFilename,'exportData');
                             exportData = []; %#ok<NASGU>
                             files_completed(i) = true;
-                            
-                        else
-                            
-                            files_failed(i) = true;
-                            
+                            didExport = true;
                         end
                     end
+                    
+                    if(didExport)
+                        files_completed(i) = true;
+                    else
+                        files_failed(i) = true;
+                    end
+                    
                     
                     fileStopTime = toc(fileStartTime);
                     fprintf('File %d of %d (%0.2f%%) Completed in %0.2f seconds\n',i,file_count,i/file_count*100,fileStopTime);

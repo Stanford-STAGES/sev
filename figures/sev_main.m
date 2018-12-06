@@ -32,7 +32,7 @@ function varargout = sev_main(varargin)
 % loadSTAGES(stages_filename,num_epochs)
 % Edit the above text to modify the response to help sev_main
 
-% Last Modified by GUIDE v2.5 25-Jul-2018 08:49:41
+% Last Modified by GUIDE v2.5 06-Dec-2018 08:13:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -303,3 +303,17 @@ function menu_settings_reset_defaults_Callback(hObject, eventdata, handles)
 % Construct a questdlg with three options
     
     reset_defaults_dlg(parameters_filename);
+
+
+% --------------------------------------------------------------------
+function menu_export_events_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_export_events (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function menu_export_spectrum_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_export_spectrum (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
