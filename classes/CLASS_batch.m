@@ -105,8 +105,8 @@ classdef CLASS_batch < handle
                     a=regexp(pathStruct.filename_list,pat,'names');
                     [basenames, labels] = cellfun(@(c)deal(c.basename,c.channelName),a,'uniformoutput',false);
                     pathStruct.channelLabels = unique(labels);   
-                    pathStruct.basenames = basenames;
-                    numStudies = numel(unique(basenames));
+                    pathStruct.basenames = unique(basenames);
+                    numStudies = numel(pathStruct.basenames);
                     pathStruct.statusString = sprintf('%d %s files (%0.1f %s) - %d IDs and %d channels - found in the current %s.  %d IDs, %d channels', num_files,extStr, totalBytes, byteSuffix, numStudies,numel(pathStruct.channelLabels), sourceStr);
                 end
             end           

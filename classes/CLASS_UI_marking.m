@@ -1295,11 +1295,11 @@ classdef CLASS_UI_marking < handle
              bExp = CLASS_batchExport_figure(this.SETTINGS.EXPORT);
              
              %% uncomment when done debugging - anytime after 12/8/2018 @hyatt
-             %              waitfor(bExp.figureH);
-             %              exportSettingsUsed = bExp.getUserSettings();
-             %             if(~isempty(exportSettingsUsed))
-             %                 this.SETTINGS.EXPORT = exportSettingsUsed;
-             %             end
+%              waitfor(bExp.figureH);
+%              exportSettingsUsed = bExp.getUserSettings();
+%              if(~isempty(exportSettingsUsed))
+%                  this.SETTINGS.EXPORT = exportSettingsUsed;
+%              end
         end
              
         
