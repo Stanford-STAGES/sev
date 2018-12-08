@@ -1,6 +1,6 @@
 # MATLAB_filename,  Label, Settings Editor, Requires, Description
-export_selected_channels, Selected Channels, plist_editor_dlg, filename, Export a reduced .edf file using only selected channels.
-export_candidate_eyesclosed, Candidate eyes closed, plist_editor_dlg, channel
-export_biocals_eyesclosed, Alpha Power, plist_editor_dlg, channel
-export_psd, Power Spectral Density, plist_editor_dlg, filename
-export_deidentify, Deidentify, plist_editor_dlg, filename, Removes potential PHI from .EDF file header.
+export_selected_channels, Selected Channels, plist_editor_dlg, edf_filename, Export a reduced .edf file using only selected channels.
+export_candidate_eyesclosed, Candidate eyes closed, plist_editor_dlg, edf_channel
+export_biocals_eyesclosed, Alpha Power, plist_editor_dlg, edf_channel
+export_psd, Power Spectral Density, plist_editor_dlg, psd_pathname
+export_deidentify, Deidentify, plist_editor_dlg, edf_pathname, Removes potential PHI from .EDF file header.

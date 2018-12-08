@@ -1292,10 +1292,14 @@ classdef CLASS_UI_marking < handle
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
         function menu_batch_edfExport_callback(this, varargin)
-            exportSettingsUsed = batch_export(this.SETTINGS.BATCH_PROCESS.export);
-            if(~isempty(exportSettingsUsed))
-                this.SETTINGS.BATCH_PROCESS.export = exportSettingsUsed;
-            end
+             bExp = CLASS_batchExport_figure(this.SETTINGS.EXPORT);
+             
+             %% uncomment when done debugging - anytime after 12/8/2018 @hyatt
+             %              waitfor(bExp.figureH);
+             %              exportSettingsUsed = bExp.getUserSettings();
+             %             if(~isempty(exportSettingsUsed))
+             %                 this.SETTINGS.EXPORT = exportSettingsUsed;
+             %             end
         end
              
         

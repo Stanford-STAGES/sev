@@ -33,13 +33,17 @@ classdef  CLASS_settings < handle
         %> struct of multiple spectrum independent component settings.
         MUSIC;          
         %visibleObj;
+        
+        %> struct for CLASS_batchExport_figure user settings
+        EXPORT;
     end
     
     properties(Constant)
         
         %> @brief Prefix string for calling detection package methods (i.e.
         %> 'detection.')
-        detectorPackagePrefixStr = 'detection.';     
+        detectorPackagePrefixStr = 'detection.'; 
+        exportPackagePrefixStr = 'export.';
     end
     
     methods(Static)
@@ -348,8 +352,6 @@ classdef  CLASS_settings < handle
         % =================================================================
         function obj = CLASS_settings(rootpathname,parameters_filename)
             %initialize settings in SEV....
-            
-            
             if(nargin==0)
                 obj.rootpathname = fileparts(mfilename('fullpath'));
                 
@@ -359,7 +361,6 @@ classdef  CLASS_settings < handle
                 obj.initialize();
             end
         end
-        
 
         
         % --------------------------------------------------------------------
@@ -371,7 +372,7 @@ classdef  CLASS_settings < handle
         % =================================================================
         function initialize(obj)
             %initialize global variables in SEV....
-            obj.fieldNames = {'VIEW','BATCH_PROCESS','PSD','MUSIC'};
+            obj.fieldNames = {'VIEW','BATCH_PROCESS','PSD','MUSIC','EXPORT'};
             obj.setDefaults();
             
             if(exist(obj.parameters_filename,'file'))
@@ -481,7 +482,7 @@ classdef  CLASS_settings < handle
                     obj.(fname) = tmp_obj.(fname);
                 end
                 wasModified = true;
-                tmp_obj = []; %clear it out.
+                clear('tmp_obj');% tmp_obj = []; %clear it out.
 
             else
                 wasModified = false;
@@ -526,7 +527,7 @@ classdef  CLASS_settings < handle
             
             fid = fopen(filename,'w');
             if(fid<0)
-                [path, fname, ext]  = fileparts(filename);
+                [~, fname, ext]  = fileparts(filename);
                 fid = fopen(fullfile(pwd,[fname,ext]));
             end
             if(fid>0)
@@ -682,10 +683,14 @@ classdef  CLASS_settings < handle
                         obj.BATCH_PROCESS.images.buffer_sec = 0.5;
                         obj.BATCH_PROCESS.images.buffer_flag = 1;
                         
-                        
-                        %export
                         obj.BATCH_PROCESS.export.edf_folder = '.'; %the edf folder to do a batch job on.
-                        obj.BATCH_PROCESS.export.output_folder = '.';                        
+                        obj.BATCH_PROCESS.export.output_folder = '.';      
+                        
+                    case 'EXPORT'
+                        %export
+                        obj.EXPORT = CLASS_batchExport_figure.getDefaults();
+                          
+                        
                 end
             end
         end

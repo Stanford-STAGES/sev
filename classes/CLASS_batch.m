@@ -16,7 +16,102 @@ classdef CLASS_batch < handle
     methods
         
     end % End methods
-    methods(Static)        
+    methods(Static)    
+        
+        function pathStruct = checkPathForExts(extPath,ext,playlist)
+            %looks in the path for given file suffix/extension
+            ext = lower(ext);
+            pathStruct.filename_list = [];
+            pathStruct.fullfilename_list = [];
+            pathStruct.pathname = [];
+            pathStruct.megabyte_count = [];
+            pathStruct.statusString = [];
+            pathStruct.channelLabels = [];
+            pathStruct.firstHDR = struct();
+            pathStruct.ext = ext;
+            if(nargin<1 || isempty(extPath))
+                extPath = pwd;
+            end
+            if(nargin<2)
+                playlist = []; %CLASS_batch.getPlayList(handles);                
+            end
+            
+            pathStruct.pathname = extPath;
+            
+            if(~exist(extPath,'file'))
+                pathStruct.statusString = 'Directory does not exist. ';
+                num_files = 0;
+                num_files_all = 0;                
+            else
+                if(strcmpi(ext,'psd'))
+                    ext = 'psd.txt';
+                end
+                [pathStruct.filename_list, pathStruct.fullfilename_list] = getFilenamesi(extPath,ext);
+                
+                num_files_all = numel(pathStruct.filename_list);
+                
+                if(~isempty(playlist))
+                    [pathStruct.filename_list, filtered_intersect_indices] = CLASS_batch.filterPlayList(pathStruct.filename_list,playlist);
+                    pathStruct.fullfilename_list = pathStruct.fullfilename_list(filtered_intersect_indices);
+                end
+                
+                num_files = numel(pathStruct.filename_list);
+                totalBytes = 0;
+                
+                for e=1:num_files
+                    tmpF = dir(pathStruct.fullfilename_list{e});
+                    totalBytes = totalBytes+tmpF.bytes;
+                end
+
+                pathStruct.megabyte_count = totalBytes/1E6;
+                
+                if(totalBytes>1E9)
+                    totalBytes = totalBytes/1E9;
+                    byteSuffix = 'GB';
+                else
+                    totalBytes = totalBytes/1E6;
+                    byteSuffix = 'MB';
+                end
+                
+                extStr = upper(ext);
+                if(numel(ext)>3)
+                    extStr = lower(ext);
+                end
+                
+                if(~isempty(playlist))
+                    sourceStr = 'play list';
+                else
+                    sourceStr = 'directory';
+                end
+                pathStruct.statusString = sprintf('%d %s files (%0.1f %s) found in the current %s.  ', num_files,extStr, totalBytes, byteSuffix, sourceStr);
+
+            end            
+            
+            if(num_files==0)
+                
+                if(num_files_all==0)
+                    pathStruct.statusString = [pathStruct.statusString, 'Please choose a different directory'];
+                else
+                    pathStruct.statusString = [pathStruct.statusString, 'Please select a different play list or use ''All'''];
+                end
+            else 
+                if(strcmp(ext,'edf'))
+                    first_fullfilename = pathStruct.fullfilename_list{1};
+                    
+                    pathStruct.firstHDR = loadEDF(first_fullfilename);
+                    pathStruct.channelLabels = pathStruct.firstHDR.label;
+                elseif(strncmpi(ext,'psd',3))
+                    pat = ['(?<basename>[^\.]+)\.(?<channelName>[^\.]+)\.',strrep(ext,'.','\.')];
+                    a=regexp(pathStruct.filename_list,pat,'names');
+                    [basenames, labels] = cellfun(@(c)deal(c.basename,c.channelName),a,'uniformoutput',false);
+                    pathStruct.channelLabels = unique(labels);   
+                    pathStruct.basenames = basenames;
+                    numStudies = numel(unique(basenames));
+                    pathStruct.statusString = sprintf('%d %s files (%0.1f %s) - %d IDs and %d channels - found in the current %s.  %d IDs, %d channels', num_files,extStr, totalBytes, byteSuffix, numStudies,numel(pathStruct.channelLabels), sourceStr);
+                end
+            end           
+        end
+        
         % ======================================================================
         %> @brief checkPathForEDFs
         % ======================================================================
@@ -31,8 +126,11 @@ classdef CLASS_batch < handle
         %> - @c edf_megabyte_count
         %> - @c statusString
         %> - @c firstHDR
+        %> @note Replacing soon with
+        %checkPathForExt(edfPath,'edf',varargin{:})  @hyatt 12/7/2018
         % ======================================================================
         function edfPathStruct = checkPathForEDFs(edfPath,playlist)
+            
             %looks in the path for EDFs
 
             edfPathStruct.edf_filename_list = [];
@@ -65,27 +163,26 @@ classdef CLASS_batch < handle
                     edfPathStruct.edf_fullfilename_list = edfPathStruct.edf_fullfilename_list(filtered_intersect_indices);
                 end
                 num_edfs = numel(edfPathStruct.edf_filename_list);
-                total_bytes = 0;
+                totalBytes = 0;
                 for e=1:num_edfs
                     tmpF = dir(edfPathStruct.edf_fullfilename_list{e});
-                    total_bytes = total_bytes+tmpF.bytes;
+                    totalBytes = totalBytes+tmpF.bytes;
                 end
-                
 
-                edfPathStruct.edf_megabyte_count = total_bytes/1E6;
+                edfPathStruct.edf_megabyte_count = totalBytes/1E6;
                 
-                if(total_bytes>1E9)
-                    total_bytes = total_bytes/1E9;
-                    byte_suffix = 'GB';
+                if(totalBytes>1E9)
+                    totalBytes = totalBytes/1E9;
+                    byteSuffix = 'GB';
                 else
-                    total_bytes = total_bytes/1E6;
-                    byte_suffix = 'MB';
+                    totalBytes = totalBytes/1E6;
+                    byteSuffix = 'MB';
                 end
                 
                 if(~isempty(playlist))
-                    edfPathStruct.statusString = [num2str(num_edfs),' EDF files (',num2str(total_bytes,'%0.1f'),' ',byte_suffix,') found in the current play list. '];
+                    edfPathStruct.statusString = [num2str(num_edfs),' EDF files (',num2str(totalBytes,'%0.1f'),' ',byteSuffix,') found in the current play list. '];
                 else
-                    edfPathStruct.statusString = [num2str(num_edfs),' EDF files (',num2str(total_bytes,'%0.1f'),' ',byte_suffix,') found in the current directory. '];
+                    edfPathStruct.statusString = [num2str(num_edfs),' EDF files (',num2str(totalBytes,'%0.1f'),' ',byteSuffix,') found in the current directory. '];
                 end
             end            
             
@@ -99,7 +196,6 @@ classdef CLASS_batch < handle
             else               
                 first_edf_fullfilename = edfPathStruct.edf_fullfilename_list{1};
                 edfPathStruct.firstHDR = loadEDF(first_edf_fullfilename);
-                
             end           
         end
 

@@ -230,7 +230,7 @@ classdef CLASS_codec < handle
         % =================================================================
         function [packageMethodName, fullFilename] = getPackageMethodName(methodName,packageName)
             candidateCategories = {'export','detection','filter'};
-            rootPath = fileparts(mfilename('fullpath'));
+            rootPath = fileparts(fileparts(mfilename('fullpath')));
             
             if(isempty(intersect(packageName, candidateCategories)))
                 packageMethodName = [];
