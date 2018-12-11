@@ -184,7 +184,7 @@ classdef CLASS_channels_container < handle
            c = uisetcolor(childobj.reference_line_color);
            if(numel(c)~=1)
                obj.setReferenceLineColor(obj.current_channel_index,c)
-           end;
+           end
            set(gco,'selected','off');
        end
        
@@ -240,9 +240,9 @@ classdef CLASS_channels_container < handle
                for k=1:numel(num_reqd_indices)
                    if(num_reqd_indices(k)==max_num_sources)
                        uimenu(event_detector_uimenu,'Label',evt_label{k},'separator','off','callback',{@obj.contextmenu_event_detector_callback,mfile{k}});
-                   end;
+                   end
                end
-           end;
+           end
            obj.mainline_contextmenu_h = uicontextmenu_handle;
        end
        
@@ -278,7 +278,7 @@ classdef CLASS_channels_container < handle
                set(default_scale_handle,'checked','on');
            else
                set(default_scale_handle,'checked','off');
-           end;
+           end
            
            %show/hide the show filter handle
            if(isempty(channelObj.filter_data))
@@ -431,7 +431,7 @@ classdef CLASS_channels_container < handle
            else
                set(hObject,'Checked','on')
                set(childObj.line_handle,'linesmoothing','on');
-           end;
+           end
            set(gco,'selected','off');
        end
        
@@ -481,8 +481,8 @@ classdef CLASS_channels_container < handle
                if(tmp.hidden)
                    set(contextmenu_h,'enable','on');
                    uimenu(contextmenu_h,'Label',tmp.title,'separator','off','callback',@tmp.show);
-               end;
-           end;
+               end
+           end
            set(gco,'selected','off');
            
        end
@@ -520,7 +520,7 @@ classdef CLASS_channels_container < handle
                cla(axes_h);
                line('parent',axes_h,'xdata',F(freq_range),'ydata',S(freq_range));
                set(axes_h,'xlim',[spectrum_settings.freq_min,spectrum_settings.freq_max])
-           end;
+           end
        end
        
        % =================================================================
@@ -558,7 +558,7 @@ classdef CLASS_channels_container < handle
                cla(axes_h);
                bar(axes_h,F,sum(S,1)/size(S,1));               
                set(axes_h,'xlim',[spectrum_settings.freq_min,spectrum_settings.freq_max])
-           end;
+           end
        end
        
        % =================================================================
@@ -634,7 +634,7 @@ classdef CLASS_channels_container < handle
                'windowbuttonmotionfcn',...
                {@obj.move_line,obj.getCurrentChild(),y_lim}...
                );
-       end;
+       end
        
        
        % =================================================================
@@ -652,7 +652,7 @@ classdef CLASS_channels_container < handle
                childobj = obj.getCurrentChild();
                childobj.scale = 1;
                childobj.draw();
-           end;
+           end
            set(gco,'selected','off');
        end
        
@@ -726,7 +726,7 @@ classdef CLASS_channels_container < handle
            c = uisetcolor(c);
            if(numel(c)~=1)
                obj.setColor(channel_index,c);
-           end;
+           end
            set(gco,'selected','off');
        end
        
@@ -773,11 +773,11 @@ classdef CLASS_channels_container < handle
                    
                    %                     updateAxes2(handles);
                    %                     updatePlot(handles);
-               end;
+               end
            else
                warndlg('no valid line handle found');
                
-           end;
+           end
            MARKING.restore_state();
            set(gco,'selected','off');
        end
@@ -924,7 +924,7 @@ classdef CLASS_channels_container < handle
            loadedEDFIndices = zeros(obj.num_channels,1);
            for k=1:numel(loadedEDFIndices)
                loadedEDFIndices(k) = obj.cell_of_channels{k}.EDF_index;
-           end;
+           end
            
            %exclude synthetic channels
            loadedEDFIndices = loadedEDFIndices(loadedEDFIndices>0);
@@ -1013,7 +1013,7 @@ classdef CLASS_channels_container < handle
                for k = 1:obj.num_channels
                    childObj = obj.getChannel(k);
                    indices_to_draw(k)=~childObj.hidden;
-               end;
+               end
                indices_to_draw = find(indices_to_draw>0);
                
                num_channels_to_draw = numel(indices_to_draw);
@@ -1028,8 +1028,8 @@ classdef CLASS_channels_container < handle
                        childObj = obj.getCurrentChild();
                        childObj.setLineOffset(line_offset);
                    end
-               end;
-           end;
+               end
+           end
        end
        
        % =================================================================
@@ -1400,8 +1400,8 @@ classdef CLASS_channels_container < handle
            for cur_index = 1:obj.num_channels
                if(~obj.cell_of_channels{cur_index}.hidden)
                    obj.cell_of_channels{cur_index}.draw();
-               end;
-           end;
+               end
+           end
        end
        
        % =================================================================
@@ -1626,7 +1626,7 @@ classdef CLASS_channels_container < handle
                end
            else
                stats = []; %fail silently
-           end;
+           end
            
        end
        % =================================================================
@@ -1650,10 +1650,10 @@ classdef CLASS_channels_container < handle
                disp([num2str(numel(range)),' items copied to the clipboard.  Press Control-V to access data items, or type "str=clipboard(''paste'')"']);
                if(nargout==1)
                    varargout{1}=data;
-               end;
+               end
            else
                
-           end;
+           end
            
        end
        % =================================================================
@@ -1678,7 +1678,7 @@ classdef CLASS_channels_container < handle
                uiwait(msgbox(sprintf('Channel data saved to workspace variable %s',chanName)));
            else
                errordlg(sprintf('The channel index (%u) is not in an acceptable range',channel_index));
-           end;
+           end
            
        end
        % =================================================================
@@ -1692,8 +1692,8 @@ classdef CLASS_channels_container < handle
                channel_index = channels2hide(k);
                if(channel_index <=obj.num_channels)
                    obj.cell_of_channels{channel_index}.hide;
-               end;
-           end;
+               end
+           end
        end
        
        % =================================================================

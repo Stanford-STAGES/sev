@@ -1293,13 +1293,15 @@ classdef CLASS_UI_marking < handle
         % --------------------------------------------------------------------
         function menu_batch_edfExport_callback(this, varargin)
              bExp = CLASS_batchExport_figure(this.SETTINGS.EXPORT);
-             
+             bExp.addlistener('figureClosedEvent',@this.exportFigureClosedCb);
+        end
+        function exportFigureClosedCb(this, exportFigObj, varargin)            
              %% uncomment when done debugging - anytime after 12/8/2018 @hyatt
-%              waitfor(bExp.figureH);
-%              exportSettingsUsed = bExp.getUserSettings();
-%              if(~isempty(exportSettingsUsed))
-%                  this.SETTINGS.EXPORT = exportSettingsUsed;
-%              end
+             %waitfor(bExp.figureH);
+             exportSettingsUsed = exportFigObj.getUserSettings();
+             if(~isempty(exportSettingsUsed))
+                 this.SETTINGS.EXPORT = exportSettingsUsed;
+             end
         end
              
         

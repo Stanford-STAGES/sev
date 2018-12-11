@@ -115,26 +115,42 @@ if(numel(varargin)>0 && ~isempty(varargin{1}))
             selected_method_ind = 1;
     
         else
-%             selected_method_label = handles.user.methods.evt_label{selected_method_ind};
             set(handles.menu_methods,'enable','inactive');
         end
     else
         set(handles.menu_methods,'enable','inactive');
-%         set(handles.menu_methods,'style','text','string',selected_method_label,'fontWeight','bold')
     end
 else
     selected_method_ind = 1;
 end
 
 set(handles.menu_methods,'string',handles.user.methods.evt_label,'value',selected_method_ind);
+
 handles.user.selected_method_ind = selected_method_ind;
 handles.user.MAX_NUM_PROPERTIES = 17; %used to be 7; still is 7
 handles.user.modified = false;
 
 handles = menu_methods_Callback(handles.menu_methods,[],handles);
 
+
+if(strcmpi(get(handles.menu_methods,'enable'),'inactive'))
+    titleStr = sprintf('%s (settings)',getMenuString(handles.menu_methods));
+    set(handles.text_settings_title,'string',titleStr,'visible','on');
+    set(handles.menu_methods,'visible','off');
+end
+
+
+
 handles.output = get_params(handles);
-set(hObject,'name','Detector Settings (single study mode)');
+try
+    packageName = strrep(handles.user.packageName,'.','');
+    packageName = [upper(packageName(1)),packageName(2:end)];
+    figureName = sprintf('%s settings',packageName);
+catch
+    figureName = 'Settings';
+end
+
+set(hObject,'name',figureName);
 set(hObject,'visible','on');
 % resizePanelForAddedControls(handles.pan_properties,2,20);
 % resizePanelAndParentForAddedControls(handles.pan_properties,2);
@@ -177,15 +193,20 @@ plist.saveXMLPlist(pfilename,pStruct);
 
 function pStruct = get_params(handles)
 for k=1:handles.user.cur_num_properties
-    handles_key_name = ['handles.text_key_',num2str(k)];
-    handles_value_name = ['handles.edit_value_',num2str(k)];
-    key = get(eval(handles_key_name),'string');
-    str_value = get(eval(handles_value_name),'string');
-    num_value = str2double(str_value);
-    if(isempty(num_value))
-        pStruct.(key) = str_value;
+    [textH, editH] = getHandles(handles,k);    
+   
+    field = get(textH,'userdata');
+    
+    if(strcmpi(get(editH,'enable'),'off'))
+        pStruct.(field) = get(editH,'userdata');
     else
-        pStruct.(key) = num_value;
+        str_value = get(editH,'string');
+        num_value = str2double(str_value);
+        if(isempty(num_value) || isnan(num_value))
+            pStruct.(field) = str_value;
+        else
+            pStruct.(field) = num_value;
+        end
     end
     
 end
@@ -235,8 +256,32 @@ names = fieldnames(settings);
 
 handles.user.cur_num_properties = min(numel(names),handles.user.MAX_NUM_PROPERTIES);
 for k=1:handles.user.cur_num_properties
-    set(eval(['handles.text_key_',num2str(k)]),'string',names{k},'enable','on');
-    set(eval(['handles.edit_value_',num2str(k)]),'string',settings.(names{k}),'enable','on');
+    
+    [textH, editH] = getHandles(handles,k);
+    field = names{k};
+    fieldStr = strrep(field,'_',' ');
+    value = settings.(field);
+   
+    enableState = 'on';
+    if(isempty(value))
+        strValue = '';
+    elseif(isnumeric(value) || islogical(value))
+        strValue = num2str(value);
+    elseif(iscell(value))
+        strValue = '<cell value>';
+        enableState = 'off';
+        
+    else
+        strValue = value;
+    end
+    try
+        set(textH,'string',fieldStr,'enable','on','userdata',field);
+        set(editH,'string',strValue,'enable',enableState,'userdata',value);
+    catch me
+        showME(me);
+        enableState = 'off';
+        set(editH,'string','<cannot be changed>','enable',enableState,'userdata',value);
+    end
 end
 
 % %disable the remaining uicontrols
@@ -246,6 +291,17 @@ end
 %     set(eval(handles_key_name),'string',['key ',num2str(k)],'enable','off');
 %     set(eval(handles_value_name),'string',['value ',num2str(k)],'enable','off');
 % end
+
+function [textH, editH] = getHandles(handles,k)
+
+textField = ['text_key_',num2str(k)];
+editField = ['edit_value_',num2str(k)];
+textH = handles.(textField);
+editH = handles.(editField);
+
+
+
+
 
 % --- Executes during object creation, after setting all properties.
 function menu_methods_CreateFcn(hObject, eventdata, handles)
@@ -470,7 +526,8 @@ handles.user.selected_method_ind = selection_ind;
 try
     settings = feval(strcat(handles.user.packageName,handles.user.methods.mfile{selection_ind}));
     handles = set_method_fields(handles,settings);
-    save_plist(handles);    
+    save_plist(handles);
+    handles.user.modified = true;
     guidata(hObject,handles);
 catch me
     warndlg(sprintf('Default settings not provided by this method (%s)',handles.user.methods.mfile{selection_ind}),'Warning','modla');

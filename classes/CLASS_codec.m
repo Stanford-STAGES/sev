@@ -575,6 +575,10 @@ classdef CLASS_codec < handle
                 case 'wake_before_sleep'
                     firstSleep = find(~ismember(stageVector,[0,7]),1);
                     stageIndices = false(size(stageVector));
+                    
+                    if(isempty(firstSleep))
+                        firstSleep = numel(stageVector);
+                    end
                     stageIndices(1:firstSleep) = stageVector(1:firstSleep)==0;
                     
                 case 'wake_after_sleep'

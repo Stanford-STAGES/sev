@@ -1,4 +1,5 @@
 classdef CLASS_batchExport_figure < IN_FigureController
+
     properties(Constant)
         figureFcn = @batch_export;
     end
@@ -20,7 +21,7 @@ classdef CLASS_batchExport_figure < IN_FigureController
             mInd = this.getExportMethodIndex();
             methodStruct.mfilename = this.methodsStruct.mfilename{mInd};
             methodStruct.editor = this.methodsStruct.settingsEditor{mInd};
-            methodStruct.settings = this.methodsStruct.settings{mInd};
+            % methodStruct.settings = this.methodsStruct.settings{mInd};
             methodStruct.description = this.methodsStruct.description{mInd};
             methodStruct.requires = this.methodsStruct.requires{mInd};
             

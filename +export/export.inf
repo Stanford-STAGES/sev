@@ -4,3 +4,6 @@ export_candidate_eyesclosed, Candidate eyes closed, plist_editor_dlg, edf_channe
 export_biocals_eyesclosed, Alpha Power, plist_editor_dlg, edf_channel
 export_psd, Power Spectral Density, plist_editor_dlg, psd_pathname
 export_deidentify, Deidentify, plist_editor_dlg, edf_pathname, Removes potential PHI from .EDF file header.
+export_id_list, Pathname<->Filname list, plist_editor_dlg, edf_pathname
+export_dreem_report, Dreem Signal Report, plist_editor_dlg, edf_pathname
+export_psd_plots, Generate PSD Plots, plist_editor_dlg, csv_pathname
