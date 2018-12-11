@@ -1,8 +1,9 @@
 function params = export_psd_plots(varargin)
-    x = DMExportPlots(varargin{:});
-    if(nargin == 0)
+    if(nargin == 0)        
+        x = DMExportPlots([mfilename('fullpath'),'.plist']);
         params = x.params;
     else
+        x = DMExportPlots(varargin{:});
         params = isa(x,'DMExportPlots');
     end
 end
