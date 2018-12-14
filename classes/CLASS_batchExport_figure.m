@@ -354,12 +354,10 @@ classdef CLASS_batchExport_figure < IN_FigureController
             bgColor = get(this.handles.panel_channel_selection,'backgroundcolor');
             set(this.handles.radio_channelsAll,'value',1);
             set([this.handles.radio_channelsAll;
-                 this.handles.radio_channelsSome;
-                 this.handles.radio_channelsNone;                
+                 this.handles.radio_channelsSome;                 
                  this.handles.button_selectChannels],'enable','off');
             set([this.handles.radio_channelsAll;
-                 this.handles.radio_channelsSome;
-                 this.handles.radio_channelsNone],'backgroundcolor',bgColor);
+                 this.handles.radio_channelsSome],'backgroundcolor',bgColor);
             
             try
                 exportPath = this.userSettings.outputFolder;                
@@ -395,25 +393,34 @@ classdef CLASS_batchExport_figure < IN_FigureController
         function updateWidgets(this)
             
             %this.handles.push_start;
-            edfRelevantHandles = [                
+            fileRelevantHandles = [                
                 this.handles.text_files_to_process                
-                get(this.handles.panel_channel_selection,'children')
                 get(this.handles.panel_file_selection,'children')
-                this.handles.edit_selectPlayList
+                this.handles.edit_selectPlayList                
                 ];
+              
+           
+
+            this.channelStruct.labels
             
             extType = this.getMethodSettings('extType');
             canStart = numel(this.pathStruct.filename_list)>0;
             switch(extType)
                 case 'psd'
-                    set(edfRelevantHandles,'enable','off');   
+                    set(fileRelevantHandles,'enable','off');
+                    if(~isempty([]))
+                         set(get(this.handles.panel_channel_selection,'children'),'enable','on');
+                    end
                 case 'edf'
                     if(~isempty(this.channelStruct.labels))            
-                        set(edfRelevantHandles,'enable','on'); 
+                        set(fileRelevantHandles,'enable','on'); 
                     end                    
                 otherwise            
                     canStart = true;
-                    set(edfRelevantHandles,'enable','off');
+                    set(fileRelevantHandles,'enable','off');
+            end
+            if(~isempty(this.channelStruct.labels))
+                set(get(this.handles.panel_channel_selection,'children'),'enable','on');
             end
             if(canStart)
                 set(this.handles.push_start,'enable','on');
@@ -437,15 +444,18 @@ classdef CLASS_batchExport_figure < IN_FigureController
         end
         
         function selectChannelsCb(this,varargin)
-            userdata = this.edfData;
-            outputStruct = montage_dlg(userdata.labels,userdata.selectedIndices);
+
+            outputStruct = montage_dlg(this.channelStruct.labels,...
+                this.channelStruct.selectedIndices);
             
             if(isempty(outputStruct))
-                outputStruct.channels_selected= [];
-            end
-            this.channelStruct.selectedIndices = outputStruct.channels_selected;
-
-            if(~any(userdata.selectedIndices))
+                this.channelStruct.selectedIndices= [];
+            else
+                this.channelStruct.selectedIndices= outputStruct.channels_selected;
+            end            
+             
+            % all or nothing ...
+            if(~any(this.channelStruct.selectedIndices) || all(this.channelStruct.selectedIndices))
                 set(this.handles.radio_channelsAll,'value',1);
             else
                 set(this.handles.radio_channelsSome,'value',1);
