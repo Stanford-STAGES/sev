@@ -4,6 +4,6 @@ function params = export_psd_plots(varargin)
         params = x.params;
     else
         x = DMExportPlots(varargin{:});
-        params = isa(x,'DMExportPlots');
+        params = isa(x,'DMExportPlots') && x.status.finished;
     end
 end

@@ -48,7 +48,9 @@ classdef CLASS_batchExport_figure < IN_FigureController
             fileExt = this.getMethodSettings('extType');
             inputPath = this.userSettings.inputFolder;
             extType = this.getMethodSettings('extType');
-            this.pathStruct = CLASS_batch.checkPathForExts(inputPath,extType,this.playList);                
+            
+            this.pathStruct = CLASS_batch.checkPathForExts(inputPath,extType,this.playList);     
+            
             this.channelStruct.labels = this.pathStruct.channelLabels;
             set(this.handles.text_files_to_process,'string',this.pathStruct.statusString);
             set(this.handles.edit_input_directory,'string',this.pathStruct.pathname);
@@ -147,20 +149,31 @@ classdef CLASS_batchExport_figure < IN_FigureController
                try
                    didExport = CLASS_converter.exportFromPath(exportSettings.inputPathname,exportSettings.exportPathname, exportSettings.methodStruct);
                    if(didExport)
-                       dlgFcn = @msgbox;
-                       msg = 'Export complete';
+                       %                        dlgFcn = @msgbox;
+                       %                        msg = 'Export complete';
+                       dfs=get(groot,'DefaultUIControlFontSize');
+                       set(groot,'DefaultUIControlFontSize',12);
+                       respBtn = questdlg('Export complete','Export summary',...
+                           'Close','See output folder','Close');
+                       set(groot,'DefaultUIControlFontSize',dfs);
+                       if(strcmpi(respBtn,'See output folder'))
+                           openDirectory(exportSettings.exportPathname);
+                       end
+                                           
+
                    else
                        dlgFcn = @warndlg;
                        msg = 'The export did not complete!';
+                       dlgFcn(msg);
                    end
-
                    
                catch me
                    showME(me);
                    dlgFcn = @errordlg;
                    msg = 'There were errors during export';
+                   dlgFcn(msg);
                end          
-               dlgFcn(msg);
+               
                
            else
                if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels') && ...
@@ -337,18 +350,19 @@ classdef CLASS_batchExport_figure < IN_FigureController
             set([this.handles.radio_processAll;
                 this.handles.radio_processList],'backgroundcolor',bgColor);            
             
-            
             % channel selection
             bgColor = get(this.handles.panel_channel_selection,'backgroundcolor');
             set(this.handles.radio_channelsAll,'value',1);
             set([this.handles.radio_channelsAll;
-                this.handles.radio_channelsSome;
-                this.handles.button_selectChannels],'enable','off');
+                 this.handles.radio_channelsSome;
+                 this.handles.radio_channelsNone;                
+                 this.handles.button_selectChannels],'enable','off');
             set([this.handles.radio_channelsAll;
-                this.handles.radio_channelsSome],'backgroundcolor',bgColor);
+                 this.handles.radio_channelsSome;
+                 this.handles.radio_channelsNone],'backgroundcolor',bgColor);
             
             try
-                exportPath =  this.userSettings.outputFolder;                
+                exportPath = this.userSettings.outputFolder;                
                 if(~exist(exportPath,'file') || (~isempty(exportPath) && exportPath(1)=='.'))
                     exportPath = pwd;
                     this.userSettings.outputFolder = exportPath;
@@ -453,9 +467,9 @@ classdef CLASS_batchExport_figure < IN_FigureController
         end
         
         function push_export_directory_Callback(this, varargin)
-            
+            methodStruct = this.getMethodSettings();
             exportPathname = get(this.handles.edit_export_directory,'string');
-            exportPathname = uigetfulldir(exportPathname,'Select the directory containing EDF files to process');
+            exportPathname = uigetfulldir(exportPathname,sprintf('Select the directory containing %s files to process',methodStruct.extType));
             
             if(~isempty(exportPathname))
                 set(this.handles.edit_export_directory,'string',exportPathname);

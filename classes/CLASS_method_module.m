@@ -5,6 +5,7 @@ classdef CLASS_method_module < handle
     properties(SetAccess=protected)
         params;
         plistFilename;
+        status;
     end
     methods
         function this = CLASS_method_module(arg1, arg2, params,varargin)
@@ -21,9 +22,12 @@ classdef CLASS_method_module < handle
                 end
                 if(nargin<2)
                     arg2 = [];
-                end                
+                end 
+                this.init();
                 this.methodFcn(arg1, arg2, varargin{:});
             end
+        end
+        function init(this)
         end
         
         % this does not work - taken from single method functions that were

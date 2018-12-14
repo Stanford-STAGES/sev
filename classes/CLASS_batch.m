@@ -48,6 +48,7 @@ classdef CLASS_batch < handle
                 end
                 [pathStruct.filename_list, pathStruct.fullfilename_list] = getFilenamesi(extPath,ext);
                 
+                
                 num_files_all = numel(pathStruct.filename_list);
                 
                 if(~isempty(playlist))
@@ -88,11 +89,23 @@ classdef CLASS_batch < handle
             end            
             
             if(num_files==0)
-                
-                if(num_files_all==0)
-                    pathStruct.statusString = [pathStruct.statusString, 'Please choose a different directory'];
+
+                if(~strcmp(ext,'edf'))
+                    [pathStruct.pathname_list, pathStruct.fullpathname_list] = getPathnames(extPath,ext);
+                    numSubpaths = numel(pathStruct.pathname_list);                    
                 else
-                    pathStruct.statusString = [pathStruct.statusString, 'Please select a different play list or use ''All'''];
+                    numSubpaths = 0;
+                end
+                if(numSubpaths>0)
+                    pathStruct.channelLabels = pathStruct.pathname_list;   
+                    pathStruct.basenames = [];                    
+                    pathStruct.statusString = sprintf('%d subpaths (with %s files) found in the current %s.', numSubpaths,extStr, 'directory');
+                else
+                    if(num_files_all==0)
+                        pathStruct.statusString = [pathStruct.statusString, 'Please choose a different directory'];
+                    else
+                        pathStruct.statusString = [pathStruct.statusString, 'Please select a different play list or use ''All'''];
+                    end
                 end
             else 
                 if(strcmp(ext,'edf'))
@@ -434,7 +447,9 @@ classdef CLASS_batch < handle
                 '\nFiles Completed:\t%u',...
                 '\nTime elapsed:\t%s'],num_files_attempted,num_files_skipped,num_files_failed,num_files_completed,elapsed_time);
 
+            dfs = get(0,'defaultUIControlFontSize');
             set(0,'defaultUicontrolFontsize',11);
+            
             if(num_files_attempted~=num_files_completed)
                 skipped_filenames = filename_list(files_skipped|files_failed);
                 listHeight = min(numel(skipped_filenames)*12,120)+24;  % 12 works for fontsize 10, 13 for fontsize 11, and so on.
@@ -454,6 +469,7 @@ classdef CLASS_batch < handle
             else
                 dialogH = msgbox(summaryText,'Completed');
             end
+            set(0,'defaultUicontrolFontsize',dfs);
         end
         
     end %End static methods
