@@ -95,9 +95,14 @@ classdef CLASS_batchExport_figure < IN_FigureController
        %==========================================================================
        function exportSettings = getExportSettings(this)
            
-
-           channelSelection.all = get(this.handles.radio_channelsAll,'value');
-           channelSelection.source = this.channelStruct.labels(this.channelStruct.selectedIndices);
+           channelSelection = [];
+           if(~isempty(this.channelStruct.labels))               
+               if(get(this.handles.radio_channelsAll,'value'))
+                   channelSelection = this.channelStruct.labels;
+               else
+                   channelSelection = this.channelStruct.labels(this.channelStruct.selectedIndices);
+               end
+           end
            
            exportSettings.inputPathname = get(this.handles.edit_input_directory,'string');
            exportSettings.fileSelectionList = [];
@@ -147,7 +152,8 @@ classdef CLASS_batchExport_figure < IN_FigureController
            
            if(strcmpi(exportSettings.methodStruct.fcnInput,'pathname'))
                try
-                   didExport = CLASS_converter.exportFromPath(exportSettings.inputPathname,exportSettings.exportPathname, exportSettings.methodStruct);
+                   didExport = CLASS_converter.exportFromPath(exportSettings.inputPathname,exportSettings.exportPathname,...
+                       exportSettings.methodStruct,exportSettings.channelSelection);
                    if(didExport)
                        %                        dlgFcn = @msgbox;
                        %                        msg = 'Export complete';
@@ -398,10 +404,6 @@ classdef CLASS_batchExport_figure < IN_FigureController
                 get(this.handles.panel_file_selection,'children')
                 this.handles.edit_selectPlayList                
                 ];
-              
-           
-
-            this.channelStruct.labels
             
             extType = this.getMethodSettings('extType');
             canStart = numel(this.pathStruct.filename_list)>0;
