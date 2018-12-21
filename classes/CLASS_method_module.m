@@ -1,4 +1,4 @@
-classdef CLASS_method_module < handle    
+classdef CLASS_method_module < CLASS_base
     properties(Constant, Abstract)
         MODULE;
     end

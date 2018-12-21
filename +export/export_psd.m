@@ -52,7 +52,8 @@ function canExport = exportPSDFiles(psdPathname, exportPath, params)
     
     filenamePrefix =  {'wake','stage1','stage2','stage3_4','REM','allSleep','wake_before_sleep','wake_after_sleep','wake_after_sleeponset'};
     
-    filenamePrefix = {'wake_before_sleep'};
+    filenamePrefix = {'wake_before_sleep','wake'};
+    
     
     
     artifactLabels = {'has_artifact','artifact_removed'};
