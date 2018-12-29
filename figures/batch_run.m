@@ -10,7 +10,7 @@ function varargout = batch_run(varargin)
     
     % Edit the above text to modify the response to help batch_run
     
-    % Last Modified by GUIDE v2.5 04-Sep-2018 10:58:09
+    % Last Modified by GUIDE v2.5 29-Dec-2018 01:54:37
     
     % Begin initialization code - DO NOT EDIT
     gui_Singleton = 1;
@@ -75,7 +75,10 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
             'enable','off');
         
         set(handles.menu_artifact_method,'string',GUI_TEMPLATE.detection.labels,'callback',...
-            {@menu_event_callback,handles.check_artifact_export_images,[handles.menu_artifact_channel1,handles.menu_artifact_channel2],handles.push_artifact_settings,handles.buttonArtifactSelectSources});
+            {@menu_event_callback,handles.check_artifact_use_psd_channel,[handles.menu_artifact_channel1,handles.menu_artifact_channel2],handles.push_artifact_settings,handles.buttonArtifactSelectSources});
+        
+        set(handles.check_artifact_use_psd_channel,'visible','on',...
+            'callback',{@check_usePowerSpectrumChannelCb,handles.menu_artifact_channel1});
         
         set(handles.push_psd_settings,'enable','off','userdata',MARKING.SETTINGS.PSD);
         
@@ -91,8 +94,8 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
         %         set( [
         %             handles.text_event_export_img;
         %             handles.check_event_export_images;
-        %             handles.text_artifact_export_img;
-        %             handles.check_artifact_export_images],'enable','off');
+        %             handles.text_artifact_use_psd_channel;
+        %             handles.check_artifact_use_psd_channel],'enable','off');
         
         checkPathForEDFs(handles); %Internally, this calls getPlayList since no argument is given.
         
@@ -243,7 +246,7 @@ function addedHandles = resizeForAddedRow(handles,resized_panel_h)
     elseif(resized_panel_h==handles.panel_synth_CHANNEL)
         
         %add a source channel - channel1
-        hc1 = uicontrol(GUI_TEMPLATE.channel1,'parent',resized_panel_h,'string',GUI_TEMPLATE.EDF.labels,'enable','on');
+        hc1 = uicontrol(GUI_TEMPLATE.channel1,'parent',resized_panel_h,'string',GUI_TEMPLATE.EDF.labels,'enable','on','visible','on');
         
         %add the edit output channel name
         he1 = uicontrol(GUI_TEMPLATE.edit_synth_CHANNEL,'parent',resized_panel_h);
@@ -257,10 +260,15 @@ function addedHandles = resizeForAddedRow(handles,resized_panel_h)
         hc2=uicontrol(GUI_TEMPLATE.channel2,'parent',resized_panel_h);
         buttonEventSelectSources = uicontrol(GUI_TEMPLATE.buttonEventSelectSources,'parent',resized_panel_h);
         
-        h_check_save_img = uicontrol(GUI_TEMPLATE.check_save_image,'parent',resized_panel_h);
+        if(resized_panel_h==handles.panel_events)
+            h_check_option = uicontrol(GUI_TEMPLATE.check_save_image,'parent',resized_panel_h);
+        else
+            h_check_option = uicontrol(GUI_TEMPLATE.check_use_psd_channel1,'parent',resized_panel_h,...
+                'callback',{@check_usePowerSpectrumChannelCb,hc1});
+        end
         h_params=uicontrol(GUI_TEMPLATE.push_parameter_settings,'parent',resized_panel_h);
-        h_menu = uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,h_check_save_img,[hc1,hc2],h_params,buttonEventSelectSources});
-        rowHandles = [h_menu, h_check_save_img, hc1, hc2, buttonEventSelectSources, h_params];
+        h_menu = uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,h_check_option,[hc1,hc2],h_params,buttonEventSelectSources});
+        rowHandles = [h_menu, h_check_option, hc1, hc2, buttonEventSelectSources, h_params];
     end
     
     panelTag = get(resized_panel_h,'tag');
@@ -383,98 +391,50 @@ function checkPathForEDFs(handles,playlist)
         playlist = getPlaylist(handles);
     end
     
-    path = get(handles.edit_edf_directory,'string');
-    if(~exist(path,'file'))
-        EDF_message = 'Directory does not exist. ';
-        num_edfs = 0;
+    edfPath = get(handles.edit_edf_directory,'string');
+    if(~isdir(edfPath))
+        warndlg('Path does not exist!');
     else
-        %pc's do not have a problem with case; unfortunately the other side
-        %does in prior versions...
-        %         if(ispc)
-        %             edf_file_list = dir(fullfile(path,'*.EDF'));
-        %         else
-        %             edf_file_list = [dir(fullfile(path, '*.EDF'));dir(fullfile(path, '*.edf'))]; %dir(fullfile(path, '*.EDF'))];
-        %         end
-        edf_file_list = dir(fullfile(path,'*.EDF'));
+        edfPathStruct = CLASS_batch.checkPathForEDFs(edfPath,playlist);
         
-        num_edfs_all = numel(edf_file_list);
+        affectedHandles = [
+            handles.push_run
+            handles.edit_selectPlaylist
+            get(handles.panel_synth_CHANNEL,'children')
+            get(handles.panel_events,'children')
+            get(handles.panel_psd,'children')
+            get(handles.panel_artifact,'children')
+            get(handles.bg_panel_playlist,'children')
+           ];
         
-        if(~isempty(playlist))
-            edf_file_list = filterPlaylist(edf_file_list,playlist);
-        end
-        num_edfs = numel(edf_file_list);
-        bytes_cell = cell(num_edfs,1);
-        [bytes_cell{:}]=edf_file_list.bytes;
-        total_bytes = sum(cell2mat(bytes_cell))/1E6;
-        if(~isempty(playlist))
-            EDF_message = [num2str(num_edfs),' EDF files (',num2str(total_bytes,'%0.2f'),' MB) found in the current play list. '];
-        else
-            EDF_message = [num2str(num_edfs),' EDF files (',num2str(total_bytes,'%0.2f'),' MB) found in the current directory. '];
-        end
-    end
-    
-    
-    affectedHandles = [handles.push_run
-        handles.edit_selectPlaylist
-        get(handles.panel_synth_CHANNEL,'children')
-        get(handles.panel_events,'children')
-        get(handles.panel_psd,'children')
-        get(handles.panel_artifact,'children')
-        get(handles.bg_panel_playlist,'children')
-        ];
-    
-    if(num_edfs==0)
-        EDF_labels = 'No Channels Available';
         
-        if(num_edfs_all==0)
-            EDF_message = [EDF_message, 'Please choose a different directory'];
-            set(get(handles.bg_panel_playlist,'children'),'enable','off');
+        if(edfPathStruct.num_edfs==0)
+            if(edfPathStruct.num_edfs_all==0)
+                set(get(handles.bg_panel_playlist,'children'),'enable','off');
+            end
             
+            set(affectedHandles,'enable','off');
+            set(handles.edit_selectPlaylist,'hittest','off');
+            updateSave2ImageOptions(handles);
+            EDF_labels = 'No Channels Available';
         else
-            EDF_message = [EDF_message, 'Please select a different play list or use ''All'''];
+            set(affectedHandles,'enable','on');
+            set(handles.edit_synth_CHANNEL_name,'enable','on');            
+            set(handles.edit_selectPlaylist,'enable','inactive','hittest','on');
+            
+            EDF_labels = edfPathStruct.firstHDR.label;
         end
+   
+        GUI_TEMPLATE.EDF.labels = EDF_labels;
         
-        set(affectedHandles,'enable','off');
-        set(handles.edit_selectPlaylist,'hittest','off');
-        %         set(handles.push_run,'enable','off');
-        %         set(get(handles.panel_synth_CHANNEL,'children'),'enable','off');
-        %         set(get(handles.panel_events,'children'),'enable','off');
-        %         set(get(handles.panel_psd,'children'),'enable','off');
-        %         set(get(handles.panel_artifact,'children'),'enable','off');
-        updateSave2ImageOptions(handles);
+        set(handles.text_edfs_to_process,'string',edfPathStruct.statusString);
         
-        
-    else
-        
-        set(affectedHandles,'enable','on');
-
-        %         set(get(handles.panel_synth_CHANNEL,'children'),'enable','on');
-        %          set(handles.push_run,'enable','on');
-        %          set(get(handles.panel_events,'children'),'enable','on');
-         
-        set(handles.edit_synth_CHANNEL_name,'enable','off');
-        
-        %         set(handles.menu_spectral_method,'enable','on');
-        %         set(handles.push_add_psd,'enable','on');
-        %         set(get(handles.panel_artifact,'children'),'enable','on');
-        %         set(get(handles.bg_panel_playlist,'children'),'enable','on');
-        
-        set(handles.edit_selectPlaylist,'enable','inactive','hittest','on');
-        
-        first_edf_filename = edf_file_list(1).name;
-        HDR = loadEDF(fullfile(path,first_edf_filename));
-        EDF_labels = HDR.label;
+        %adjust all popupmenu selection data/strings for changed EDF labels
+        set(...
+            findobj(handles.figure1,'-regexp','tag','.*channel.*','-and','style','popupmenu'),...
+            'string',EDF_labels);
     end
-    
-    GUI_TEMPLATE.EDF.labels = EDF_labels;
-    
-    set(handles.text_edfs_to_process,'string',EDF_message);
-    
-    %adjust all popupmenu selection data/strings for changed EDF labels
-    set(...
-        findobj(handles.figure1,'-regexp','tag','.*channel.*'),...
-        'string',EDF_labels);
-    
+
 end
 
 function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
@@ -827,10 +787,10 @@ function handles = createGlobalTemplate(handles)
     %adding more entries later.
     global GUI_TEMPLATE;
     GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC'};
-    set(handles.menu_spectral_method,'string',GUI_TEMPLATE.spectrum_labels);
+    set(handles.menu_spectral_method,'string',GUI_TEMPLATE.spectrum_labels,'units','pixels');
     set([handles.menu_psd_channel
         handles.menu_event_channel1
-        handles.menu_event_channel2],'enable','on','visible','off');
+        handles.menu_event_channel2],'enable','on','visible','off','units','pixels');
     
     handles.user.panel_synth_CHANNEL = {[handles.menu_synth_CHANNEL_channel1;
         handles.edit_synth_CHANNEL_name
@@ -844,7 +804,7 @@ function handles = createGlobalTemplate(handles)
         handles.push_event_settings]};
     
     handles.user.panel_artifact = {[handles.menu_artifact_method
-        handles.check_artifact_export_images
+        handles.check_artifact_use_psd_channel
         handles.menu_artifact_channel1
         handles.menu_artifact_channel2
         handles.buttonArtifactSelectSources
@@ -854,11 +814,19 @@ function handles = createGlobalTemplate(handles)
         handles.menu_psd_channel
         handles.push_psd_settings]};
     
+    set([handles.user.panel_synth_CHANNEL{:}
+        handles.user.panel_events{:}
+        handles.user.panel_artifact{:}
+        handles.user.panel_psd{:} ],'units','pixels');
+    
+    set([handles.check_event_export_images
+        handles.check_artifact_use_psd_channel],'enable','on');
     src.edit_synth_CHANNEL = get(handles.edit_synth_CHANNEL_name);
     src.push_CHANNEL_configuration = get(handles.push_synth_CHANNEL_settings);    
     src.channel1 = get(handles.menu_event_channel1);
     src.channel2 = get(handles.menu_event_channel2);
     src.check_save_image = get(handles.check_event_export_images);
+    src.check_use_psd_channel1 = get(handles.check_artifact_use_psd_channel);
     src.push_parameter_settings = get(handles.push_event_settings);
     src.buttonEventSelectSources = get(handles.buttonEventSelectSources);
     src.buttonArtifactSelectSources = get(handles.buttonArtifactSelectSources);    
@@ -876,9 +844,9 @@ function handles = createGlobalTemplate(handles)
        
     %I liked the distance between these two on the GUIDE display of the figure
     %and would like to keep the same spacing for additional rows that are added
-    add_button_pos = get(handles.push_add_event,'position'); 
-    GUI_TEMPLATE.row_separation = add_button_pos(2)-src.evt_method.Position(2);
- 
+    %add_button_pos = get(handles.push_add_event,'position'); 
+    %GUI_TEMPLATE.row_separation = add_button_pos(2)-src.evt_method.Position(2);
+    GUI_TEMPLATE.row_separation  = 30;
     % GUI_TEMPLATE.spectrum_labels = {'None','PSD','MUSIC','Coherence'};
 end
 
@@ -1020,7 +988,6 @@ function push_add_event_Callback(hObject, eventdata, handles)
     addedH = addEventRow(handles);
     updateDetectorSelection(addedH(1),addedH(2),addedH(3:4),addedH(6),addedH(5));
     
-
 end
 
 % --- Executes on button press in push_add_psd.
@@ -1073,6 +1040,14 @@ end
 % Called by artifact and detector event pulldown menus.
 function menu_event_callback(hObject,~,varargin)  
     updateDetectorSelection(hObject, varargin{:});
+end
+
+function check_usePowerSpectrumChannelCb(hObject, ~, menuH)
+    if(get(hObject,'value'))
+        set(menuH,'enable','off');
+    else
+        set(menuH,'enable','on');
+    end
 end
 
 function updateDetectorSelection(h_detector_menu,h_img_check, h_pop_channels,h_push_settings,h_buttonSelectSource)
@@ -1291,7 +1266,7 @@ function updateSave2ImageOptions(handles)
     global GUI_TEMPLATE;
     image_checkboxes = [findobj(handles.panel_events,'-regexp','tag','images');findobj(handles.panel_artifact,'-regexp','tag','images')];
     
-    img_h = [handles.text_artifact_export_img;handles.text_event_export_img;image_checkboxes];
+    img_h = [handles.text_event_export_img;image_checkboxes];
     
     if(canRun(handles) && handles.user.BATCH_PROCESS.images.save2img)
         set(img_h,'enable','on');

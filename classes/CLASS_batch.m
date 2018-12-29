@@ -153,6 +153,7 @@ classdef CLASS_batch < handle
             edfPathStruct.statusString = [];
             edfPathStruct.firstHDR = [];
             
+            
             if(nargin<1 || isempty(edfPath))
                 edfPath = pwd;
             end
@@ -209,7 +210,10 @@ classdef CLASS_batch < handle
             else               
                 first_edf_fullfilename = edfPathStruct.edf_fullfilename_list{1};
                 edfPathStruct.firstHDR = loadEDF(first_edf_fullfilename);
-            end           
+            end 
+            edfPathStruct.num_edfs = num_edfs;
+            edfPathStruct.num_edfs_all = num_edfs_all;
+            
         end
 
         
