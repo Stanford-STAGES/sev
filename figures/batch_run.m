@@ -1224,7 +1224,7 @@ function synthesize_CHANNEL_configuration_callback(hObject,eventdata,menuchannel
     settings = get(hObject,'userdata');
     cur_channel_index = get(menuchannels_h,'value');
     
-    [settings, noneEventIndices] = prefilter_dlg(GUI_TEMPLATE.EDF.labels{cur_channel_index},settings);
+    [settings, noneEventIndices] = prefilter_dlg([],GUI_TEMPLATE.EDF.labels{cur_channel_index},settings);
     settings(noneEventIndices) = [];
     
     

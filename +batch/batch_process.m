@@ -292,7 +292,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                 numConfigurations = numel(cell_all_properties{1});
                 pStructArray = repmat(pStruct,numConfigurations,1);
                 
-                for j = 1:numConfigurations;
+                for j = 1:numConfigurations
                     for p = 1:num_keys
                         pStructArray(j).(keys{p}) = cell_all_properties{p}(j);
                     end
@@ -393,6 +393,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                         cur_filename = file_list(i).name;
                         
                         skip_file = false;
+                        edf_fullfilename= fullfile(pathname,cur_filename);
                         stages_filename = CLASS_codec.getStagesFilenameFromEDF(edf_fullfilename);
                         
                         %require stages filename to exist.

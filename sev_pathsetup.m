@@ -9,4 +9,10 @@ function sev_pathname = sev_pathsetup()
     
     subPaths = {'auxiliary','utility','classes','figures','widgets','external','external/widgets','external/utility','external/controllers'};
     cellfun(@(x)addpath(fullfile(sev_pathname,x)),subPaths);
+    
+    % 
+    %     addonsPath = '~/git/matlab/sleep';
+    %     if(isdir(addonsPath))
+    %         addpath(addonsPath);
+    %     end
 end

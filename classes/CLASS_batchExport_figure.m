@@ -542,7 +542,6 @@ classdef CLASS_batchExport_figure < IN_FigureController
             
             CLASS_batch.checkPathForEDFs(this.getInputPathname(),this.playList);
         end
-
     end
 
     methods (Static)

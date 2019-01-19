@@ -44,7 +44,7 @@ classdef CLASS_codec < handle
         %>                           .study_duration_in_seconds
         %> modified 5.1.2013 - added .filename = stages_filename;
         %> modified 11.10.2018 - add Dreem hypnogram load stage wrapper
-        function STAGES = loadSTAGES(stages_filename,num_epochs,unknown_stage_label)            
+        function STAGES = loadSTAGES(stages_filename,num_epochs,unknown_stage_label)
             STAGES.standard_epoch_sec = CLASS_codec.SECONDS_PER_EPOCH; %30 second epochs
             STAGES.standard_epoch_min = CLASS_codec.SECONDS_PER_EPOCH/60; %30 second epochs
             
@@ -72,9 +72,13 @@ classdef CLASS_codec < handle
 
                 %load stages information if the file exists and we know its
                 %extension.
-                if(ismember(lower(ext), {'.sta','.evts','.txt'}))
+                if(ismember(lower(ext), {'.sta','.evts','.txt','.edf'}))
                     if(strcmpi(ext,'.sta'))
                         stages = load(stages_filename,'-ASCII'); %for ASCII file type loading
+                    elseif(strcmpi(ext,'.edf'))
+                        stageStruct = CLASS_codec.getStageStructFromEDFPlusFile(stages_filename);
+                        % epochs = stageStruct.epochs;
+                        stages = stageStruct.stage;
                     else
                         if(strcmpi(ext,'.evts'))
                             [~,stageVec] = CLASS_codec.parseSSCevtsFile(stages_filename,default_unknown_stage);

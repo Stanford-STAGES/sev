@@ -137,7 +137,7 @@ if(isempty(p_ind))
     p_ind = 1;
 else
     p_ind = numel(regexp(p_str(1:p_ind(1)),'\|'))+1; %do all this to check if the person is passing in a different wintype that they want used
-end;
+end
 
 set(handles.windowtype_popupmenu,'value',p_ind);
 
@@ -296,7 +296,7 @@ else
     handles.user.FFT_window_sec = winlen;
     handles.user.modified = true;
 %     updatePlot(hObject,handles);
-end;
+end
 
 guidata(hObject,handles);
 
@@ -318,8 +318,8 @@ function varargout = ok_pushbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to ok_pushbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-uiresume(handles.psd_figure);
+figH = get(hObject,'parent');
+uiresume(figH);
 
 
 % --- Executes on button press in cancel_pushbutton.
@@ -330,7 +330,14 @@ function cancel_pushbutton_Callback(hObject, eventdata, handles)
 
 handles.user.modified = false;
 guidata(hObject,handles);
-uiresume(handles.psd_figure);
+figH = get(hObject,'parent');
+try
+    uiresume(figH);
+catch
+    showME(me);
+    delete(figH);
+end
+
 % delete(handles.psd_figure);
 % delete(gcf);
 % delete(get(hObject,'parent'));
@@ -351,7 +358,7 @@ if( isequal(get(handles.psd_figure,'waitstatus'),'waiting'))
 else
     %the GUI isn't waiting for anything, just close it
     delete(handles.psd_figure);
-end;
+end
 % uiresume(handles.psd_figure);
 % delete(gcf);
 
@@ -367,10 +374,10 @@ if isequal(get(hObject,'CurrentKey'),'escape')
     handles.user.modified = false;
     guidata(hObject,handles);
     uiresume(handles.psd_figure);
-end;
+end
 if isequal(get(hObject,'CurrentKey'),'return')
     uiresume(handles.psd_figure);
-end;
+end
 
 
 % --- Executes on selection change in list_psg_channels.

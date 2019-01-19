@@ -75,7 +75,7 @@ HDR.digital_minimum = str2double(cellstr(char(fread(fid,[8,ns],precision)')));% 
 HDR.digital_maximum = str2double(cellstr(char(fread(fid,[8,ns],precision)')));% ns * 8 ascii : ns * digital maximum (e.g. 2047)')
 HDR.prefiltering = cellstr(char(fread(fid,[80,ns],precision)'));% ns * 80 ascii : ns * prefiltering (e.g. HP:0.1Hz LP:75Hz)')
 HDR.number_samples_in_each_data_record = str2double(cellstr(char(fread(fid,[8,ns],precision)')));% ns * 8 ascii : ns * nr of samples in each data record
-HDR.reserved = cellstr(char(fread(fid,[32,ns],precision)'));% ns * 32 ascii : ns * reserved
+HDR.signals_reserved = cellstr(char(fread(fid,[32,ns],precision)'));% ns * 32 ascii : ns * reserved
 
 HDR.fs = HDR.number_samples_in_each_data_record/HDR.duration_of_data_record_in_seconds; %sample rate
 HDR.samplerate = HDR.fs;

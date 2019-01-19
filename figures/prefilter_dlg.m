@@ -59,22 +59,36 @@ function prefilter_dlg_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for prefilter_dlg
 %
-% varargin{1} = cell of channel label names which are used to determine
+% varargin{1} = []
+% varargin{2} = cell of channel label names which are used to determine
 % which channel is going to be filtered and which channels are used as
 % reference(s) as applicable
-% varargin{2} = filterArrayStruct - an array of filters passed in which
+% varargin{3} = filterArrayStruct - an array of filters passed in which
 % will be used to populate this gui so that the user does not have to
 % repeate previous options.
-% varargin{3} = filter path
-% varargin{4} = filter filename for filter.inf data
-% varargin{5} = instance of CLASS_channels_container
+% varargin{4} = filter path
+% varargin{5} = filter filename for filter.inf data
+% varargin{6} = instance of CLASS_channels_container
+
+global GUI_TEMPLATE;
 
 if(numel(varargin)>0)
+    if(isempty(varargin{1}))
+        varargin(1) = [];
+    end
     handles.user.channel_label = varargin{1};
+    try
+        handles.user.ref_channel_label = GUI_TEMPLATE.EDF.labels;
+    catch me
+        handles.user.ref_channel_label = varargin{1};
+    end
     
     %make it a cell because of how I handle indexing for this variable.
     if(~iscell(handles.user.channel_label))
         handles.user.channel_label = {handles.user.channel_label};
+    end
+    if(~iscell(handles.user.ref_channel_label))
+        handles.user.ref_channel_label = {handles.user.ref_channel_label};
     end
 else
     handles.user.channel_label = {'No channels provided'};
@@ -203,13 +217,13 @@ if(isnumeric(cur_row))
 end
 
 for k = 1:2
-    set(handles.(['menu_ref',num2str(k),'_',cur_row]),'enable','on','string',handles.user.channel_label);
+    set(handles.(['menu_ref',num2str(k),'_',cur_row]),'enable','on','string',handles.user.ref_channel_label);
 end
 
 filter_index = get(handles.(['menu_filter_',cur_row]),'value');
 
 for k = handles.user.filterInf.num_reqd_indices(filter_index)+1:2
-    set(handles.(['menu_ref',num2str(k),'_',cur_row]),'enable','off','string',handles.user.channel_label);
+    set(handles.(['menu_ref',num2str(k),'_',cur_row]),'enable','off','string',handles.user.ref_channel_label);
 end
 
 param_gui = handles.user.filterInf.param_gui{filter_index};
@@ -371,7 +385,7 @@ for cur_row = 1:handles.user.num_rows
     handles.output(cur_row).m_file = handles.user.filterInf.mfile{filter_choice};
     for k=1:handles.user.filterInf.num_reqd_indices(filter_choice)
         handles.output(cur_row).ref_channel_index(end+1) = get(handles.(['menu_ref',num2str(k),'_',cur_row_str]),'value');
-        handles.output(cur_row).ref_channel_label{end+1} = handles.user.channel_label{handles.output(cur_row).ref_channel_index(k)};
+        handles.output(cur_row).ref_channel_label{end+1} = handles.user.ref_channel_label{handles.output(cur_row).ref_channel_index(k)};
     end
     
     % do not return parameters in case where no filter is selected ('none')

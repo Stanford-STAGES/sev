@@ -21,7 +21,7 @@
 % epoch would be set and, on occassion, interfere with the desired
 % centering.
 % ======================================================================
-classdef CLASS_UI_marking < handle
+classdef CLASS_UI_marking < CLASS_base
     
     properties
         %> for the patch handles when editing and dragging
@@ -978,7 +978,7 @@ classdef CLASS_UI_marking < handle
             elseif(strcmpi(settingsName,'classifier'))
                 obj.SETTINGS.initializeDetectors();
             else
-                fprintf('Unrecognized settings name (%s)\n',settingsName);                
+                obj.logStatus('Unrecognized settings name (%s)',settingsName);                
             end
         end
 
@@ -1827,7 +1827,7 @@ classdef CLASS_UI_marking < handle
                 end
                 
             catch ME
-                fprintf(1,'Problem loading file in %s\n',mfilename('fullpath'));
+                obj.logStatus('Problem loading file in %s\n',mfilename('fullpath'));
                 showME(ME);
             end
         end
@@ -1866,19 +1866,27 @@ classdef CLASS_UI_marking < handle
                 if(exist(stages_filename,'file'))
                     obj.loadSTAGES(stages_filename,obj.num_epochs);
                 else
-                    fprintf(1,'Staging File %s not found!  Will attempt to find alternative staging file.\r\n',stages_filename);
-
-                    stages_filename = fullfile(obj.SETTINGS.VIEW.src_edf_pathname,strcat(name,'.evts'));
-                    if(exist(stages_filename,'file'))
+                    
+                    if(obj.hasEDFAnnotations())
+                        obj.logStatus('Found EDF+ annotations');
+                        stages_filename = fullfile(EDF_pathname,EDF_filename);
                         obj.loadSTAGES(stages_filename,obj.num_epochs);
-                        
                     else
-                        stages_filename = fullfile(obj.SETTINGS.VIEW.src_edf_pathname,strcat(name,'_hypnogram.txt'));
+                        
+                        obj.logStatus('Staging File %s not found!  Will attempt to find alternative staging file.',stages_filename);
+                        
+                        stages_filename = fullfile(obj.SETTINGS.VIEW.src_edf_pathname,strcat(name,'.evts'));
                         if(exist(stages_filename,'file'))
                             obj.loadSTAGES(stages_filename,obj.num_epochs);
+                            
                         else
-                            fprintf(1,'Alternate staging file %s not found!  Fictitious staging will be used.\r\n',stages_filename);
-                            obj.loadSTAGES([],obj.num_epochs);
+                            stages_filename = fullfile(obj.SETTINGS.VIEW.src_edf_pathname,strcat(name,'_hypnogram.txt'));
+                            if(exist(stages_filename,'file'))
+                                obj.loadSTAGES(stages_filename,obj.num_epochs);
+                            else
+                                obj.logStatus('Alternate staging file %s not found!  Fictitious staging will be used.',stages_filename);
+                                obj.loadSTAGES([],obj.num_epochs);
+                            end
                         end
                     end
                 end
@@ -1937,7 +1945,14 @@ classdef CLASS_UI_marking < handle
             new_channels_loaded_flag =~isempty(montage)&&num_indicesToLoad>0;
         end
         
-                
+        function [has, index] = hasEDFAnnotations(obj,HDR)
+            if(nargin==1)
+                HDR = obj.EDF_HDR;
+            end
+            index = find(strcmpi(HDR.label,'EDF Annotations'),1);
+            has = ~isempty(index);            
+        end
+        
         function setDateTimeFromHDR(obj,HDR)
             %setup values based on EDF HDR passed in
             if(nargin==1)
@@ -2423,7 +2438,7 @@ classdef CLASS_UI_marking < handle
                             estimate_suffix = EVENT_CONTAINER.get_event_labels();
                             estimate_suffix = char(estimate_suffix{EVENT_CONTAINER.roc_estimate_ind});
                             drawROC(Q,comparisonStruct.FPR,comparisonStruct.TPR,obj.axeshandle.utility,estimate_suffix);
-                            fprintf(1,'TPR=%0.2f\tFPR=%0.2f\tCohenKappa=%0.3f\tF=%0.3f\tPPV=%0.3f\tNPV=%0.3f\n',comparisonStruct.TPR*100,comparisonStruct.FPR*100,comparisonStruct.CohensKappa,comparisonStruct.f_measure,comparisonStruct.PPV,comparisonStruct.NPV);
+                            obj.logStatus('TPR=%0.2f\tFPR=%0.2f\tCohenKappa=%0.3f\tF=%0.3f\tPPV=%0.3f\tNPV=%0.3f\n',comparisonStruct.TPR*100,comparisonStruct.FPR*100,comparisonStruct.CohensKappa,comparisonStruct.f_measure,comparisonStruct.PPV,comparisonStruct.NPV);
                         end
                         EVENT_CONTAINER.roc_axes_needs_update = false;
                     end
