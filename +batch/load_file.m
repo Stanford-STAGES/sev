@@ -49,9 +49,8 @@ HDR.label = [HDR.label;localBATCH_PROCESS.synth_CHANNEL.names];
 
 [localBATCH_PROCESS.event_settings, EDF_indices2load] = getChannelIndices(localBATCH_PROCESS.event_settings,EDF_indices2load,HDR.label);
 
-[localBATCH_PROCESS.PSD_settings, EDF_indices2load] = getChannelIndices(localBATCH_PROCESS.PSD_settings,EDF_indices2load,HDR.label);
+[localBATCH_PROCESS.spectral_settings, EDF_indices2load] = getChannelIndices(localBATCH_PROCESS.spectral_settings,EDF_indices2load,HDR.label);
 
-[localBATCH_PROCESS.MUSIC_settings, EDF_indices2load] = getChannelIndices(localBATCH_PROCESS.MUSIC_settings,EDF_indices2load,HDR.label);
 
 %consolidate the list of EDF indices that will be loaded by removing any
 %initialized index locations that did not have unique channel names
@@ -59,12 +58,12 @@ HDR.label = [HDR.label;localBATCH_PROCESS.synth_CHANNEL.names];
 if(isempty(EDF_indices2load))
     event_with_no_channels = false;
     for e=1:numel(localBATCH_PROCESS.event_settings)
-       if(isempty(localBATCH_PROCESS.event_settings{e}.channel_labels));
+       if(isempty(localBATCH_PROCESS.event_settings{e}.channel_labels))
            event_with_no_channels = true;
        end
     end
     for a=1:numel(localBATCH_PROCESS.artifact_settings)
-       if(isempty(localBATCH_PROCESS.artifact_settings{a}.channel_labels));
+       if(isempty(localBATCH_PROCESS.artifact_settings{a}.channel_labels))
            event_with_no_channels = true;
        end
     end
@@ -80,7 +79,7 @@ if(isempty(EDF_indices2load))
         %continues on here anyway since the non-channel detection method
         %exists
     end
-end;
+end
 
 EDF_indices2load = cell2mat(EDF_indices2load);
 all_indices = EDF_indices2load;  %keep track of all indices
@@ -141,7 +140,7 @@ for k = 1:numel(all_indices)
         synth_settings = localBATCH_PROCESS.synth_CHANNEL.settings_lite{cur_synth_channel};
         filterStruct = localBATCH_PROCESS.synth_CHANNEL.structs{cur_synth_channel};
         synthLabel = localBATCH_PROCESS.synth_CHANNEL.names{cur_synth_channel};
-        for j=1:numel(filterStruct);
+        for j=1:numel(filterStruct)
             filterStruct(j).src_channel_index = synth_settings.channel_indices(find(strcmp(filterStruct(j).src_channel_label,synth_settings.channel_labels),1));
             for m=1:numel(filterStruct(j).ref_channel_index)
                 filterStruct(j).ref_channel_index(m) = synth_settings.channel_indices(find(strcmp(filterStruct(j).ref_channel_label(m),synth_settings.channel_labels),1));
@@ -153,6 +152,7 @@ for k = 1:numel(all_indices)
         cur_synth_channel = cur_synth_channel+1;
     end
 end
+
 
 
 function [detection_settings, EDF_indices2load] = getChannelIndices(detection_settings,EDF_indices2load,EDF_labels)
@@ -176,69 +176,80 @@ function [detection_settings, EDF_indices2load] = getChannelIndices(detection_se
 
 
 for r = 1:numel(detection_settings)
-    num_channels = numel(detection_settings{r}.channel_labels);
+    curStruct = detection_settings(r);
+    num_channels = numel(curStruct.channel_labels);
     
     %make room in memory for the channel_indices reference
-    detection_settings{r}.channel_indices = zeros(1,num_channels);
+    curStruct.channel_indices = zeros(1,num_channels);
     for c=1:num_channels
-        ind2load = find(strcmp(detection_settings{r}.channel_labels{c},EDF_labels)); %this is the index into EDF_labels, the .EDF
+        label = curStruct.channel_labels{c};
+        [curStruct.channel_indices(c), EDF_indices2load] = getOrSetLoadIndex(label, EDF_labels, EDF_indices2load);
+    end
     
-        %handle the cases when I do not have the right referencing available...
-        if(isempty(ind2load))
+    if(isfield(curStruct,'reference_channel_label'))
+        ref_label = curStruct.reference_channel_label;
+        [curStruct.reference_channel_index, EDF_indices2load] = getOrSetLoadIndex(ref_label, EDF_labels, EDF_indices2load);
+    end
+    detection_settings(r) = curStruct;    
+end
+
+function [loadIndex, EDF_indices2load] = getOrSetLoadIndex(label, EDF_labels, EDF_indices2load)
+    ind2load = find(strcmp(label,EDF_labels)); %this is the index into EDF_labels, the .EDF
+    
+    %handle the cases when I do not have the right referencing available...
+    if(isempty(ind2load))
+        
+        %handle the case where I need a referenced label,
+        indexPair = findAlternativeChannels(label,EDF_labels);
+        
+        if(isempty(indexPair))
+            ME = MException('Batch:load_file',['Channel label (',label,') not found in this EDF.']);
+            throw(ME);
+        else
+            %handle the case of the indexPair existing
+            ind2load = indexPair(1);
             
-            %handle the case where I need a referenced label,
-            indexPair = findAlternativeChannels(detection_settings{r}.channel_labels{c},EDF_labels);
-
-            if(isempty(indexPair))
-                ME = MException('Batch:load_file',['Channel label (',detection_settings{r}.channel_labels{c},') not found in this EDF.']);
-                throw(ME);
-            else
-                %handle the case of the indexPair existing
-                ind2load = indexPair(1);
-                
-                %check if this index has already been marked for labeling
-                loadedInd = [];
-                for k=1:numel(EDF_indices2load)
-                    if(ind2load == EDF_indices2load{k}(1))
-                        loadedInd = k;
-                        break;
-                    end;
-                end;
-
-                if(isempty(loadedInd))
-                    %update the vector of indices to load to contain the index that
-                    %was found in the EDF header
-                    EDF_indices2load{end+1} = ind2load;
-                    detection_settings{r}.channel_indices(c) = numel(EDF_indices2load);
-                else
-                    detection_settings{r}.channel_indices(c) = loadedInd;
-                end
-            end            
-        else            
             %check if this index has already been marked for labeling
             loadedInd = [];
             for k=1:numel(EDF_indices2load)
                 if(ind2load == EDF_indices2load{k}(1))
                     loadedInd = k;
                     break;
-                end;
-            end;            
-            %if it has not been marked for labeling, then mark it and adjust
-            %load counts
+                end
+            end
+            
             if(isempty(loadedInd))
                 %update the vector of indices to load to contain the index that
                 %was found in the EDF header
                 EDF_indices2load{end+1} = ind2load;
-                detection_settings{r}.channel_indices(c) = numel(EDF_indices2load);
-                
+                loadIndex = numel(EDF_indices2load);
+            else
+                loadIndex = loadedInd;
+            end
+        end
+    else
+        %check if this index has already been marked for labeling
+        loadedInd = [];
+        for k=1:numel(EDF_indices2load)
+            if(ind2load == EDF_indices2load{k}(1))
+                loadedInd = k;
+                break;
+            end
+        end
+        %if it has not been marked for labeling, then mark it and adjust
+        %load counts
+        if(isempty(loadedInd))
+            %update the vector of indices to load to contain the index that
+            %was found in the EDF header
+            EDF_indices2load{end+1} = ind2load;
+            loadIndex = numel(EDF_indices2load);
+            
             %otherwise, just update the class_channel_indices reference vector
             %to the previously assigned CHANNELS_CONTAINER index
-            else
-                detection_settings{r}.channel_indices(c) = loadedInd;
-            end            
-        end;
+        else
+            loadIndex = loadedInd;
+        end
     end
-end
 
 function EDF_channel_index_pair = findAlternativeChannels(desired_channel_label,HDR_labels)
 % %handle the case when we are running the batch mode and did not find
@@ -261,6 +272,7 @@ function EDF_channel_index_pair = findAlternativeChannels(desired_channel_label,
             break;
         end
     end
+    
 
 %verify_synthetic_channel_usage 
 % %FIXED (BUG) - not referencing a synthesized channel in an event or artifact

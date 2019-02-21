@@ -6,11 +6,13 @@ function didExport = export_psd(sourcePath, exportPath, params, varargin)
     defaultParams.channelLabel = 'all';
     defaultParams.sleepCategory = 'all';  % {'wake','stage1','stage2','stage3_4','REM','allSleep','wake_before_sleep','wake_after_sleep','wake_after_sleeponset'};
     % wake_before_sleep
-    % defaultParams.excludeArtifact = 'yes'; %{ 'yes','no', 'yesno','both'}
+    defaultParams.excludeArtifact = 0; % 'yes'; %{ 'yes','no', 'yesno','both'}
     defaultParams.minStageDuration_sec = 90;    
     defaultParams.minDuration_sec = 30;  % now update this to look at at least 3 epochs.
     defaultParams.minShaveTime_sec = 30;  % and shave off the leading and trailing epochs.
+    defaultParams.estimateType = 'percent';  %{'percent','power','psd'}
     
+    % params.playList = 'dmStudiesList.csv';
     
     % return default parameters if no input arguments are provided.
     if(nargin==0)
@@ -31,7 +33,7 @@ function didExport = export_psd(sourcePath, exportPath, params, varargin)
                     plist.saveXMLPlist(pfile,params);
                 end
             end
-            params.playList = 'dmStudiesList.csv';
+            
             
             if(isnan(params.channelLabel))
                 params.channelLabel = 'all';
@@ -48,20 +50,33 @@ end
 
 function canExport = exportPSDFiles(psdPathname, exportPath, params)
 
-    estimate_types = {'psd','power','percent'};
+    if(isempty(params.estimateType))
+        estimate_types = {'psd','power','percent'};
+    else
+        estimate_types = {params.estimateType};
+    end
     
-    filenamePrefix =  {'wake','stage1','stage2','stage3_4','REM','allSleep','wake_before_sleep','wake_after_sleep','wake_after_sleeponset'};
+    if(isempty(params.sleepCategory)||strcmpi(params.sleepCategory,'all'))
+        filenamePrefix =  {'wake','stage1','stage2','stage3_4','REM','allSleep','wake_before_sleep','wake_after_sleep','wake_after_sleeponset'};
+    else
+        filenamePrefix = params.sleepCategory;
+        if(~iscell(filenamePrefix))
+            filenamePrefix = {filenamePrefix};
+        end
+    end
     
-    filenamePrefix = {'wake_before_sleep','wake'};
-    
-    
-    
+   
     artifactLabels = {'has_artifact','artifact_removed'};
     artifactExcluded = {false, true};
+    
     % studyListFile = params.playList;
     
-    playlist = [];
-    pathStruct = CLASS_batch.checkPathForExts(psdPathname,'psd',playlist);
+    if(isfield(params,'playList'))
+        playList= params.playList;
+    else
+        playList = [];
+    end
+    pathStruct = CLASS_batch.checkPathForExts(psdPathname,'psd',playList);
     if(~iscell(params.channelLabel))
         params.channelLabel = {params.channelLabel};
     end
@@ -75,7 +90,6 @@ function canExport = exportPSDFiles(psdPathname, exportPath, params)
     if(canExport)
         
         
-        
         %% 'All' files include all header data found in the studyListFile
         % exportAllPath = fullfile(exportPath,'All');
         % if(~exist(exportAllPath,'dir'))
@@ -84,8 +98,8 @@ function canExport = exportPSDFiles(psdPathname, exportPath, params)
         
         %% 'PSD' or 'lite' files only include the subjectID and case/control groupings.
         exportPSDPath = fullfile(exportPath,'PSD');
-        if(~exist(exportPSDPath,'dir'))
-            mkdir(exportPSDPath)
+        if(~isormkdir(exportPSDPath))
+            throw(MException('SEV:Export:Path','Unable to create export path'));
         end
 
         patidColumnName = 'ID';
@@ -131,11 +145,20 @@ function canExport = exportPSDFiles(psdPathname, exportPath, params)
                         estimate_type = estimate_types{e};
                         
                         for s=1:numel(filenamePrefix)
-                            curPrefix = filenamePrefix{s};
+                            curPrefix = sprintf('%s_%s',filenamePrefix{s},channelLabel);
                             for a=1:numel(artifactExcluded)
-                                curFilename = sprintf('%s_%s_%s.csv',curPrefix,estimate_type,artifactLabels{a});
+                                % skip artifact exclusion output if we explicity say we don't want to
+                                % exclude artifact
+                                if(~params.excludeArtifact && artifactExcluded{a})
+                                    continue;
+                                end
+                                if(artifactExcluded{a})
+                                    curOutputFilename = sprintf('%s_%s_%s.csv',curPrefix,estimate_type,artifactLabels{a});
+                                else
+                                    curOutputFilename = sprintf('%s_%s.csv',curPrefix,estimate_type);
+                                end
                                 
-                                curPSDLiteFullFilename = fullfile(exportPSDChannelPath,curFilename);                                
+                                curPSDLiteFullFilename = fullfile(exportPSDChannelPath,curOutputFilename);                                
                                 if(firstStudy && exist(curPSDLiteFullFilename,'file'))
                                     delete(curPSDLiteFullFilename);
                                     %                     fprintf('Removing previous copy of %s\n',curFilename);
@@ -143,7 +166,7 @@ function canExport = exportPSDFiles(psdPathname, exportPath, params)
                                     
                                 stagePSDLiteFid = fopen(curPSDLiteFullFilename,'a');
                                 if(stagePSDLiteFid<0)
-                                    errMsg = sprintf('Could not append to %s (lite)',curFilename);
+                                    errMsg = sprintf('Could not append to %s (lite)',curOutputFilename);
                                     throw(MException('MATLAB:FID',errMsg));
                                 else
                                     if(firstStudy) %we need to put a header in the first time.

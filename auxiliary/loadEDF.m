@@ -12,6 +12,8 @@ function [HDR, signal] = loadEDF(filename,channels)
 %index k.  
 % May 12, 2015: Modified so that channels argument included as empty 
 % (i.e. []) is treated the same as if it were not included.  
+% 1/19/2019: channels can now also contain a cell string of channel labels
+% to load. 
 if(nargin==0)
     disp 'No input filename given; aborting';
     return;
@@ -83,7 +85,13 @@ HDR.duration_sec = HDR.duration_of_data_record_in_seconds*HDR.number_of_data_rec
 HDR.duration_samples = HDR.duration_sec*HDR.fs;
 
 if(nargout>1)
+    if(ischar(channels))
+        channels = {channels};
+    end
 
+    if(iscell(channels))
+        [~,~,channels] =  intersect(channels,HDR.label,'stable');  % keep the order the same with stable, so we don't cause issues with mixing up channels returned
+    end
     if(channels == 0) %requesting all channels then
         channels = 1:HDR.num_signals;
     end

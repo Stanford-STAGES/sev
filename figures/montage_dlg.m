@@ -73,22 +73,23 @@ function montage_dlg_OpeningFcn(hObject, eventdata, handles, channel_labels, var
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to montage_dlg (see VARARGIN)
-%
 
 units = 'pixels';
 selected_handles = [];
-
+runParams.allowUnchecking = false;
+runParams.allowReferenceChannelSelection = false;
+runParams.reference_channel_selection = 1;
 if(~isempty(varargin))
     if(numel(varargin)>0)
         selected_handles = varargin{1};
-    end;
-    
-end;
-
+    end
+    if(numel(varargin)>1)
+        runParams = varargin{2};
+    end
+end
 
 fig = handles.figure1;
 set(fig,'visible','on','units',units,'CloseRequestFcn',@closeFigureCallback);
-
 
 checkbox_handles = zeros(1,numel(channel_labels));
 % radio_handles = zeros(1,numel(channel_labels));
@@ -121,7 +122,6 @@ pb_extent = max([pb_extent;get(handles.pushbutton_ok,'extent')]);
 
 handles.pushbutton_cancel = uicontrol(fig,'style','pushbutton','units',units,'callback',@pushbutton_cancel_callback,'string','CANCEL','visible','off');
 pb_extent = max([pb_extent;get(handles.pushbutton_cancel,'extent')]);
-
 
 %adjust the checkbox extend according to account for necessary spacing
 spacing = max([20,cb_extent(4)]); %height of the text in pixels
@@ -167,7 +167,27 @@ for k=1:numel(channel_labels) %align them to the left and drop them down the mid
         cur_col = cur_col+1;
         cur_row = 1;
     end
-end;
+end
+
+% if we are allowed to have a reference channel.  
+if(runParams.allowReferenceChannelSelection)
+    if(runParams.reference_channel_selection>numel(channel_labels)+1)
+        runParams.reference_channel_selection = 1;
+    end
+
+    cur_row = cur_row+1;
+    
+    pos = [x_offset+(spacing+cb_width)*(cur_col-1), fig_height-spacing*(cur_row)-spacing, cb_extent(3:4)];
+    uicontrol(fig,'style','text','string','Reference channel','fontsize',11,...
+        'units',units,'visible','on','position',pos,'tag','text_reference_selection');
+    cur_row = cur_row+1;
+    pos = [x_offset+(spacing+cb_width)*(cur_col-1), fig_height-spacing*(cur_row)-spacing, cb_extent(3:4)];
+    handles.menu_selection = uicontrol(fig,'style','popupmenu','string',['None';channel_labels],...
+        'units',units,'visible','on','value',runParams.reference_channel_selection,'position',pos,...
+        'fontsize',12,'tag','menu_selection');
+else
+    handles.menu_selection = [];
+end
 
 pos = [fig_width/2-spacing/2-pb_extent(3), spacing, pb_extent(3:4)];
 
@@ -175,8 +195,12 @@ set(handles.pushbutton_ok,'visible','on','position',pos);
 pos = [fig_width/2+spacing/2, spacing, pb_extent(3:4)];
 set(handles.pushbutton_cancel,'visible','on','position',pos);
 
+set(checkbox_handles(selected_handles),'value',1);
+if(~runParams.allowUnchecking)
+    set(checkbox_handles(selected_handles),'enable','off');
+end
 
-set(checkbox_handles(selected_handles),'value',1,'enable','off');
+handles.user.runParams = runParams;
 handles.user.checkbox_handles = checkbox_handles;
 
 
@@ -190,28 +214,28 @@ handles.user.checkbox_handles = checkbox_handles;
 %     handles.user.primary.handle = checkbox_handles(pri_index);
 %     handles.user.primary.channel_index = pri_index;
 %     set(handles.user.primary.panel_h,'visible','on','position',get(handles.user.primary.handle,'position'));
-% end;
+% end
 % 
 % if(~isempty(art_index))
 %     set(checkbox_handles(art_index),'value',1);
 %     handles.user.artifact.handle = checkbox_handles(art_index);
 %     handles.user.artifact.channel_index = art_index;
 %     set(handles.user.artifact.panel_h,'visible','on','position',get(handles.user.artifact.handle,'position'));
-% end;
+% end
 % 
 % if(~isempty(eye1_index))
 %     set(checkbox_handles(eye1_index),'value',1);
 %     handles.user.eye1.handle = checkbox_handles(eye1_index);
 %     handles.user.eye1.channel_index = eye1_index;
 %     set(handles.user.eye1.panel_h,'visible','on','position',get(handles.user.eye1.handle,'position'));
-% end;
+% end
 % 
 % if(~isempty(eye2_index))
 %     set(checkbox_handles(eye2_index),'value',1);
 %     handles.user.eye2.handle = checkbox_handles(eye2_index);
 %     handles.user.eye2.channel_index = eye2_index;
 %     set(handles.user.eye2.panel_h,'visible','on','position',get(handles.user.eye2.handle,'position'));
-% end;
+% end
 
 uicontrol(handles.pushbutton_ok); %give OK the focus
 % handles.text1 = uicontrol('style','text','string','hello world');
@@ -226,6 +250,7 @@ uiwait(handles.figure1);
 
 function pushbutton_ok_callback(hObject, eventdata)
 handles = guidata(hObject);
+runParams = handles.user.runParams;
 select_values = get(handles.user.checkbox_handles,'value');
 if(iscell(select_values))
     output.channels_selected = cell2mat(select_values)==1;
@@ -233,12 +258,21 @@ else
     output.channels_selected = select_values;
 end
 
+% We have 'nothing selected' as first choice (index = 1), so subtract 1 to
+% get channel indices, and if the result is 0, then just return empty since
+% the user selected 'nothing selected'.
+if(runParams.allowReferenceChannelSelection)
+    output.reference_channel_selection = get(handles.menu_selection,'value');    
+end
 
-if(any(output.channels_selected))
-    handles.output = output;
-else
+% For backwards compatibility to distinguish between unselecting
+    % channels and cancelling
+    
+if ~any(output.channels_selected) && ~runParams.allowUnchecking
     handles.output = [];
-end;
+else
+    handles.output = output;    
+end
 
 guidata(hObject, handles);
 uiresume(handles.figure1);

@@ -1280,7 +1280,7 @@ classdef CLASS_UI_marking < CLASS_base
         %> @param eventdata  Unused reserved - to be defined in a future version of MATLAB
         % --------------------------------------------------------------------
         function menu_batch_run_callback(varargin)
-            batch_run();
+            batchProcessDlg();% batch_run();  
         end
 
         

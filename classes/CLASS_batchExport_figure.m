@@ -180,144 +180,133 @@ classdef CLASS_batchExport_figure < IN_FigureController
                    dlgFcn(msg);
                end          
                
+           % We are exporting channels 'edf_channel' is the other option besides pathname right now.
+           elseif(file_count>0)
+                   
+               % prep the waitbarHandle and make it look nice
+               initializationString = sprintf('%s\n\tInitializing',this.pathStruct.statusString);
+               waitbarH = CLASS_batch.createWaitbar(initializationString);
                
-           else
-               if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels') && ...
-                       exportSettings.channelSelection.all)
-                   warndlg(sprintf('Will not export selected channels if all channels are selected.\nTry again with a subsection of the channels.\n'));
-                   return;
-               end
+               files_attempted = zeros(size(fullfilenames));
+               files_completed = files_attempted;
+               files_failed  = files_attempted;
+               files_skipped = files_attempted;
                
-               if(file_count>0)
+               start_clock = clock;  %for etime
+               start_time = now;
+               timeMessage =sprintf('(Time: 00:00:00\tRemaining: ?)');
+               
+               for i=1:file_count
                    
-                   % prep the waitbarHandle and make it look nice
-                   initializationString = sprintf('%s\n\tInitializing',this.pathStruct.statusString);
-                   waitbarH = CLASS_batch.createWaitbar(initializationString);
-                   
-                   files_attempted = zeros(size(fullfilenames));
-                   files_completed = files_attempted;
-                   files_failed  = files_attempted;
-                   files_skipped = files_attempted;
-                   
-                   start_clock = clock;  %for etime
-                   start_time = now;
-                   timeMessage =sprintf('(Time: 00:00:00\tRemaining: ?)');
-                   
-                   for i=1:file_count
+                   try
+                       fileStartTime = tic;
                        
-                       try
-                           fileStartTime = tic;
-                           
-                           studyInfoStruct = [];  % initialize to empty.
-                           
-                           studyInfoStruct.filename = fullfilenames{i};
-                           [studyInfoStruct.stages_filename, studyInfoStruct.edf_name] = CLASS_codec.getStagesFilenameFromEDF(studyInfoStruct.edf_filename);
-                           
-                           [~, studyInfoStruct.study_name, studyInfoStruct.study_ext] = fileparts(studyInfoStruct.edf_filename);
-                           files_attempted(i)=1;
-                           status = sprintf('%s (%i of %i)',studyInfoStruct.edf_name,i,file_count);
+                       studyInfoStruct = [];  % initialize to empty.
+                       
+                       studyInfoStruct.filename = fullfilenames{i};
+                       studyInfoStruct.edf_filename = studyInfoStruct.filename;
+                       [studyInfoStruct.stages_filename, studyInfoStruct.edf_name] = CLASS_codec.getStagesFilenameFromEDF(studyInfoStruct.edf_filename);
+                       %                        studyInfoStruct.edf_filename = fullfile(exportSettings.inputPathname,studyInfoStruct.edf_name);
+                       [~, studyInfoStruct.study_name, studyInfoStruct.study_ext] = fileparts(studyInfoStruct.filename);
+                       files_attempted(i)=1;
+                       status = sprintf('%s (%i of %i)',studyInfoStruct.edf_name,i,file_count);
+                       waitbar(i/(file_count+1),waitbarH,status);
+                       
+                       %require stages filename to exist.
+                       if(isempty(studyInfoStruct.stages_filename) || ~exist(studyInfoStruct.stages_filename,'file'))
+                           files_skipped(i) = true;
+                           status = sprintf('%s (%i of %i)\nStage file not found!  Skipping!',studyInfoStruct.edf_name,i,file_count);
                            waitbar(i/(file_count+1),waitbarH,status);
-                           
-                           %require stages filename to exist.
-                           if(isempty(studyInfoStruct.stages_filename) || ~exist(studyInfoStruct.stages_filename,'file'))
-                               files_skipped(i) = true;
-                               status = sprintf('%s (%i of %i)\nStage file not found!  Skipping!',studyInfoStruct.edf_name,i,file_count);
-                               waitbar(i/(file_count+1),waitbarH,status);
-                           else
-                               didExport = false;
-                               if(strcmpi('filename',studyInfoStruct.requires))
-                                   if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels'))
-                                       status = sprintf('%s (%i of %i)',studyInfoStruct.study_name,i,file_count);
-                                       waitbar(i/(file_count+0.9),waitbarH,status);
-                                       
-                                       fullDestFile = fullfile(exportSettings.exportPathname,[studyInfoStruct.study_name,studyInfoStruct.study_ext]);
-                                       
-                                       didExport = CLASS_converter.writeLiteEDF(studyInfoStruct.edf_filename,fullDestFile,exportSettings.channelSelection.source); %,exportSamplerate);
-                                   else
-                                       didExport = CLASS_converter.exportFromFile(studyInfoStruct.edf_filename,exportSettings.methodStruct,stagesStruct,studyInfoStruct);
-                                   end
-                               else
-                                   
-                                   %% Load header
-                                   studyInfoStruct.edf_header = loadEDF(studyInfoStruct.edf_filename);
-                                   status = sprintf('%s (%i of %i)\nLoading hypnogram (%s)',studyInfoStruct.edf_name,i,file_count,studyInfoStruct.stages_filename);
+                       else
+                           didExport = false;
+                           if(strcmpi('filename',exportSettings.methodStruct.requires))
+                               if(strcmpi(exportSettings.methodStruct.mfilename,'export_selected_channels'))
+                                   status = sprintf('%s (%i of %i)',studyInfoStruct.study_name,i,file_count);
                                    waitbar(i/(file_count+0.9),waitbarH,status);
                                    
-                                   sec_per_epoch = 30;
-                                   studyInfo.num_epochs = studyInfoStruct.edf_header.duration_sec/sec_per_epoch;
+                                   fullDestFile = fullfile(exportSettings.exportPathname,[studyInfoStruct.study_name,studyInfoStruct.study_ext]);
                                    
-                                   %% load stages
-                                   stagesStruct = CLASS_codec.loadSTAGES(studyInfoStruct.stages_filename,studyInfo.num_epochs);
-                                   
-                                   status = sprintf('%s (%i of %i)\nLoading channels from EDF\n%s',studyInfoStruct.edf_name,i,file_count,timeMessage);
-                                   waitbar(i/(file_count+0.75),waitbarH,status);
-                                   
-                                   %% Load EDF channels
-                                   if(exportSettings.channelSelection.all)
-                                       [~,edfChannels] = loadEDF(studyInfoStruct.edf_filename);
-                                   else
-                                       fprintf(1,'exportSettings.channelSelection.sources has not been tested!\n');
-                                       [~,edfChannels] = loadEDF(studyInfoStruct.edf_filename,exportSettings.channelSelection.sources);
-                                   end
-                                   
-                                   status = sprintf('%s (%i of %i)\nApplying export method(s)',studyInfoStruct.edf_name,i,file_count);
-                                   waitbar(i/(file_count+0.4),waitbarH,status);
-                                   
-                                   %% obtain event file name
-                                   studyInfoStruct.events_filename = CLASS_codec.getEventsFilenameFromEDF(studyInfoStruct.edf_filename);
-                                   
-                                   %% obtain export data
-                                   exportData = CLASS_batch.getExportData(edfChannels,exportSettings.methodStruct,stagesStruct,studyInfoStruct);
-                                   
-                                   %% export data to disk
-                                   
-                                   if(~isempty(exportData))
-                                       status = sprintf('%s (%i of %i)\nSaving output to file',studyInfoStruct.edf_name,i,file_count);
-                                       waitbar(i/(file_count+0.2),waitbarH,status);
-                                       studyInfoStruct.saveFilename = fullfile(exportSettings.exportPathname,strcat(studyInfoStruct.study_name,'.mat'));
-                                       save(studyInfoStruct.saveFilename,'exportData');
-                                       exportData = []; %#ok<NASGU>
-                                       files_completed(i) = true;
-                                       didExport = true;
-                                   end
-                               end
-                               
-                               if(didExport)
-                                   files_completed(i) = true;
+                                   didExport = CLASS_converter.writeLiteEDF(studyInfoStruct.edf_filename,fullDestFile,exportSettings.channelSelection.source); %,exportSamplerate);
                                else
-                                   files_failed(i) = true;
+                                   didExport = CLASS_converter.exportFromFile(studyInfoStruct.edf_filename,exportSettings.methodStruct,stagesStruct,studyInfoStruct);
                                end
+                           else
                                
+                               %% Load header
                                
-                               fileStopTime = toc(fileStartTime);
-                               fprintf('File %d of %d (%0.2f%%) Completed in %0.2f seconds\n',i,file_count,i/file_count*100,fileStopTime);
-                               fileElapsedTime = etime(clock,start_clock);
-                               avgFileElapsedTime = fileElapsedTime/i;
+                               studyInfoStruct.edf_header = loadEDF(studyInfoStruct.edf_filename);
+                               status = sprintf('%s (%i of %i)\nLoading hypnogram (%s)',studyInfoStruct.edf_name,i,file_count,studyInfoStruct.stages_filename);
+                               waitbar(i/(file_count+0.9),waitbarH,status);
                                
-                               %                 num_files_completed = randi(1,0,100);
-                               num_files_completed = i;
-                               remaining_dur_sec = avgFileElapsedTime*(file_count-num_files_completed);
-                               est_str = sprintf('%01ihrs %01imin %01isec',floor(mod(remaining_dur_sec/3600,24)),floor(mod(remaining_dur_sec/60,60)),floor(mod(remaining_dur_sec,60)));
+                               sec_per_epoch = 30;
+                               studyInfo.num_epochs = studyInfoStruct.edf_header.duration_sec/sec_per_epoch;
                                
-                               timeMessage = sprintf('(Time: %s\tRemaining: %s)',datestr(now-start_time,'HH:MM:SS'),est_str);
-                               fprintf('%s\n',timeMessage);
+                               %% load stages
+                               stagesStruct = CLASS_codec.loadSTAGES(studyInfoStruct.stages_filename,studyInfo.num_epochs);
+                               
+                               status = sprintf('%s (%i of %i)\nLoading channels from EDF\n%s',studyInfoStruct.edf_name,i,file_count,timeMessage);
+                               waitbar(i/(file_count+0.75),waitbarH,status);
+                               
+                               %% Load EDF channels
+                               [~,edfChannels] = loadEDF(studyInfoStruct.edf_filename,exportSettings.channelSelection);
+                               
+                               status = sprintf('%s (%i of %i)\nApplying export method(s)',studyInfoStruct.edf_name,i,file_count);
+                               waitbar(i/(file_count+0.4),waitbarH,status);
+                               
+                               %% obtain event file name
+                               studyInfoStruct.events_filename = CLASS_codec.getEventsFilenameFromEDF(studyInfoStruct.edf_filename);
+                               
+                               %% obtain export data
+                               exportData = CLASS_batch.getExportData(edfChannels,exportSettings.methodStruct,stagesStruct,studyInfoStruct);
+                               
+                               %% export data to disk
+                               
+                               if(~isempty(exportData))
+                                   status = sprintf('%s (%i of %i)\nSaving output to file',studyInfoStruct.edf_name,i,file_count);
+                                   waitbar(i/(file_count+0.2),waitbarH,status);
+                                   studyInfoStruct.saveFilename = fullfile(exportSettings.exportPathname,strcat(studyInfoStruct.study_name,'.mat'));
+                                   save(studyInfoStruct.saveFilename,'exportData');
+                                   exportData = []; %#ok<NASGU>
+                                   files_completed(i) = true;
+                                   didExport = true;
+                               end
                            end
                            
-                       catch me
-                           showME(me);
-                           files_failed(i) = 1;
+                           if(didExport)
+                               files_completed(i) = true;
+                           else
+                               files_failed(i) = true;
+                           end
+                           
+                           
+                           fileStopTime = toc(fileStartTime);
+                           fprintf('File %d of %d (%0.2f%%) Completed in %0.2f seconds\n',i,file_count,i/file_count*100,fileStopTime);
+                           fileElapsedTime = etime(clock,start_clock);
+                           avgFileElapsedTime = fileElapsedTime/i;
+                           
+                           %                 num_files_completed = randi(1,0,100);
+                           num_files_completed = i;
+                           remaining_dur_sec = avgFileElapsedTime*(file_count-num_files_completed);
+                           est_str = sprintf('%01ihrs %01imin %01isec',floor(mod(remaining_dur_sec/3600,24)),floor(mod(remaining_dur_sec/60,60)),floor(mod(remaining_dur_sec,60)));
+                           
+                           timeMessage = sprintf('(Time: %s\tRemaining: %s)',datestr(now-start_time,'HH:MM:SS'),est_str);
+                           fprintf('%s\n',timeMessage);
                        end
+                       
+                   catch me
+                       showME(me);
+                       files_failed(i) = 1;
                    end
-                   
-                   %% Summary message and close out
-                   if(ishandle(waitbarH))
-                       % This message will self destruct in 10 seconds
-                       delete(waitbarH);
-                   end
-                   CLASS_batch.showCloseOutMessage(this.pathStruct.filename_list,files_attempted,files_completed,files_failed,files_skipped,start_time);
-               else
-                   warndlg(sprintf('The check for EDFs in the following directory failed!\n\t%s',exportSettings.edfPathname));
                end
+               
+               %% Summary message and close out
+               if(ishandle(waitbarH))
+                   % This message will self destruct in 10 seconds
+                   delete(waitbarH);
+               end
+               CLASS_batch.showCloseOutMessage(this.pathStruct.filename_list,files_attempted,files_completed,files_failed,files_skipped,start_time);
+           else
+               warndlg(sprintf('The check for EDFs in the following directory failed!\n\t%s',exportSettings.edfPathname));
            end
            
        end

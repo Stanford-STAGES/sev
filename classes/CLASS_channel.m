@@ -15,7 +15,7 @@
 %> globally when using batch mode since the batch mode processing is
 %> creating the synthetic file first.
 % ======================================================================
-classdef CLASS_channel < handle
+classdef CLASS_channel < CLASS_base
     %look for *REMOVE* to remove older files that may no longer be in use.
     % The were removed on 6/13/2014            
     % 1.  function obj = update_file_events_cell(obj,new_event_from_file_obj)
@@ -105,7 +105,7 @@ classdef CLASS_channel < handle
         summary_stats_figure_h; 
         %> handle to the table which holds the summary_stats structure
         summary_stats_uitable_h; 
-    end;
+    end
     
     methods      
         
@@ -151,8 +151,8 @@ classdef CLASS_channel < handle
                     %                     b = fir1(100,0.5);
                     %                     raw_data2 = filtfilt(b,1,raw_data);
                     raw_data = resample(raw_data,N,D); %resample to get the desired sample rate
-                end;
-            end;
+                end
+            end
             
             obj.title = src_title;
             obj.EDF_label = src_title;
@@ -189,7 +189,23 @@ classdef CLASS_channel < handle
             end
         end
         
-        
+        function dereferenceWithChannel(obj, refChObj)
+            if(~isempty(refChObj))
+                if(isa(refChObj,'CLASS_channel'))
+                    if(numel(obj.raw_data)==numel(refChObj.raw_data))
+                        obj.raw_data=obj.raw_data-refChObj.raw_data;
+                        objTitle =  obj.title;
+                        refTitle = refChObj.title;
+                        derefTitle = strjoin(setxor(strsplit(objTitle,{' ','-'}),strsplit(refTitle,{' ','-'}),'stable'),'-');
+                        if(~isempty(derefTitle))
+                            obj.title = derefTitle;
+                        end
+                    end
+                    
+                end
+            end
+            
+        end
         
         % =================================================================
         %> @brief filter channel according to properties of filterStructIn.
@@ -316,7 +332,7 @@ classdef CLASS_channel < handle
             if(~any(obj.event_indices_vector==event_index))
                 obj.event_indices_vector(end+1)=event_index;
             end
-        end;
+        end
         
         % =================================================================
         %> @brief Remove a reference of a CLASS_events instance by setting
@@ -456,7 +472,7 @@ classdef CLASS_channel < handle
             end
             
             obj.MUSIC = MUSIC_settings;
-            [obj.MUSIC.magnitudes obj.MUSIC.freq_vec obj.MUSIC.winlen] = calcPMUSIC(obj.getData(music_range),obj.samplerate,obj.MUSIC);
+            [obj.MUSIC.magnitudes, obj.MUSIC.freq_vec, obj.MUSIC.winlen] = calcPMUSIC(obj.getData(music_range),obj.samplerate,obj.MUSIC);
             if(nargout>0)
                 S = obj.MUSIC.magnitudes;
                 if(nargout>1)
@@ -533,7 +549,7 @@ classdef CLASS_channel < handle
         %> @param 
         %> @retval obj instance of CLASS_channel class.
         % =================================================================
-        function line_buttonDownFcn(obj,hObject, eventdata)
+        function line_buttonDownFcn(obj,hObject, ~)
             %callback function used by CLASS_channel objects
             global CHANNELS_CONTAINER;
             global MARKING;
@@ -572,11 +588,11 @@ classdef CLASS_channel < handle
                     click_str = sprintf('Time: %s \tValue: %0.1f \tIndex: %u\tScale: %0.2f',timeStampStr,value,samplePt,obj.scale);
                     handles = guidata(hObject);
                     set(handles.text_marker,'string',click_str);
-                end;
-            end;
+                end
+            end
             %             else
             %                 %a contextmenu will popup
-            %             end;
+            %             end
         end
 
 
@@ -603,7 +619,7 @@ classdef CLASS_channel < handle
         %> @param eventdata Not used.
         %> @retval obj instance of CLASS_channel class.
         % =================================================================
-        function text_buttonDownFcn(obj, hObject,eventdata)
+        function text_buttonDownFcn(obj, hObject,~)
             %check to make sure we are not a contextmenu
         
             if(~strcmp(get(obj.parent_fig,'selectiontype'),'alt'))
@@ -618,7 +634,7 @@ classdef CLASS_channel < handle
                 else
                     set(hObject,'string',newStr);
                     obj.title = newStr;
-                end;
+                end
             end
         end
         % =================================================================
@@ -653,8 +669,8 @@ classdef CLASS_channel < handle
                         y = obj.filter_data*obj.scale+obj.line_offset;
                     else
                         y = obj.filter_data(x)*obj.scale+obj.line_offset;
-                    end;
-                end;
+                    end
+                end
                 obj.current_samples = x; %stores the last range that was used...
                 
                 set(obj.line_handle,'xdata',x,'ydata',y);
@@ -720,7 +736,7 @@ classdef CLASS_channel < handle
                     y(1:numel(ygood)) = ygood;
                 else
                     y = obj.raw_data(sample_indices)*obj.scale+obj.line_offset;
-                end;
+                end
                 set(obj.line_handle,'ydata',y,'xdata',sample_indices,'color',obj.color);
                 
                 text_extent = get(obj.text_handle,'extent');
@@ -740,7 +756,7 @@ classdef CLASS_channel < handle
             global EVENT_CONTAINER;
             if(obj.reference_line_offsets(1)>0)
                 obj.draw_reference_lines();
-            end;            
+            end            
             
             %only draw/redraw when necessary - otherwise the events are
             %laid out already and do not need updating.
@@ -750,7 +766,7 @@ classdef CLASS_channel < handle
                 obj.repositioning = false;
             end
             EVENT_CONTAINER.updateCurrentEpochStartX(obj.event_indices_vector,obj.current_samples(1));
-        end;
+        end
 
         % =================================================================
         %> @brief Set the offset of the reference line associated with the

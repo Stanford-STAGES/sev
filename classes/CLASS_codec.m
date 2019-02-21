@@ -428,7 +428,12 @@ classdef CLASS_codec < handle
             % frequencies, some floats for the meta data and the artifact flag,
             % an ignored string (%*s) for the artifact_type column, and then
             % floats for the remaing 'S'tage and 'E'poch columns
-            scanStr = [repmat('%f\t',1,maxFrequencyToDisplayIndex),repmat('%*f\t',1,numFrequencyFieldsAfterMaxDisplayFrequency),repmat('%f\t',1,numMetaDataFields-3),'%*s\t%f\t%f'];
+            
+            % The default - uncomment after 1/20/2019
+            %scanStr = [repmat('%f\t',1,maxFrequencyToDisplayIndex),repmat('%*f\t',1,numFrequencyFieldsAfterMaxDisplayFrequency),repmat('%f\t',1,numMetaDataFields-3),'%*s\t%f\t%f'];
+            
+            % For when no artifact types exist
+            scanStr = [repmat('%f\t',1,maxFrequencyToDisplayIndex),repmat('%*f\t',1,numFrequencyFieldsAfterMaxDisplayFrequency),repmat('%f\t',1,numMetaDataFields-3),'\t%f\t%f'];
             
             column_names(strcmpi(column_names,'A_type'))=[]; %get rid of this column in the name since we have removed it at the end of our scanStr with %*s
             
@@ -442,8 +447,6 @@ classdef CLASS_codec < handle
             
             
             data = cell2mat(textscan(fid,scanStr));
-            
-            
             data = data(:,minFrequencyToDisplayIndex:end);
             
             fclose(fid);
@@ -521,6 +524,7 @@ classdef CLASS_codec < handle
                     okayStageDurationTotal_sec = sum(stageGroupDuration_sec(okayStages));
                     
                     validStageGroups = stageGroups(okayStages,:);
+                    % go2
                     stageIndices = PAData.unrollEvents(validStageGroups,numel(stageIndices));
                     %             stageIndices = stageIndices(okayIndices);
                     
