@@ -1,0 +1,1 @@
+/Users/unknown/git/informaton.dev/tools/exportTripleScore/INFExportAllianceTripleScore.m

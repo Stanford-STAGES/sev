@@ -824,8 +824,6 @@ classdef CLASS_codec < handle
             %embla_samplerate_out may change if there is a difference found in
             %the stage .evt file processing as determined by adjusting for
             %a 30 second epoch.
-            
-            
             if(nargin<2)
                 embla_samplerate = [];
             end

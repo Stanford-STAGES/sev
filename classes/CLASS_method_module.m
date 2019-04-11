@@ -1,3 +1,4 @@
+% Abstract class for creating modules to be used with SEV interface.
 classdef CLASS_method_module < CLASS_base
     properties(Constant, Abstract)
         MODULE;
@@ -7,6 +8,11 @@ classdef CLASS_method_module < CLASS_base
         plistFilename;
         status;
     end
+    
+    methods(Abstract)
+        init(this)
+    end
+        
     methods
         function this = CLASS_method_module(arg1, arg2, params,varargin)
             if(nargin==0)
@@ -27,9 +33,7 @@ classdef CLASS_method_module < CLASS_base
                 this.methodFcn(arg1, arg2, varargin{:});
             end
         end
-        function init(this)
-        end
-        
+
         % this does not work - taken from single method functions that were
         % in the same path as the .plist files being retrieved.; no longer
         % the case here.
