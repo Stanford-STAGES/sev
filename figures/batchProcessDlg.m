@@ -119,7 +119,8 @@ function batchProcessDlg_OpeningFcn(hObject, eventdata, handles, varargin)
                 load(params.importFile,'-mat','edfPathname','BATCH_PROCESS','playlist');
                 BATCH_PROCESS.configuration_file = params.importFile;
                 handles.user.BATCH_PROCESS = BATCH_PROCESS;
-                handles.user.PSD = BATCH_PROCESS.PSD_settings{1};
+                handles.user.PSD = BATCH_PROCESS.spectral_settings;
+                % handles.user.PSD = BATCH_PROCESS.PSD_settings{1};
                 % handles.user.MUSIC = BATCH_PROCESS.MUSIC_settings{1};
                 
                 setEDFPathname(handles,edfPathname);
@@ -133,8 +134,8 @@ function batchProcessDlg_OpeningFcn(hObject, eventdata, handles, varargin)
                 
                 batchImport.artifact_settings.importFcn = @addArtifactRow;
                 batchImport.artifact_settings.panelTag = 'panel_artifact';
-                batchImport.PSD_settings.importFcn = @addPSDRow;                
-                batchImport.PSD_settings.panelTag = 'panel_psd';
+                batchImport.spectral_settings.importFcn = @addPSDRow;                
+                batchImport.spectral_settings.panelTag = 'panel_psd';
                 
                 % Overly complicated to support music and psd as separate
                 % groups right now.  Will be better t adjust code at some
@@ -153,18 +154,22 @@ function batchProcessDlg_OpeningFcn(hObject, eventdata, handles, varargin)
                     end
                     curStruct = BATCH_PROCESS.(fn);
                     curImport = batchImport.(fn);
-                    if(iscell(curStruct) && ~isempty(curStruct))
-                        
-                        % This will take some more work later on based on
-                        % changes made 1/19/2019 hyatt]
-                        configurePanelRow(handles.user.(curImport.panelTag){1},curStruct{1},optionalSelection{:});
+                    if((iscell(curStruct)|| isstruct(curStruct)) && ~isempty(curStruct))                        
+                        if(iscell(curStruct))
+                            configurePanelRow(1,handles.user.(curImport.panelTag){1},curStruct{1},optionalSelection{:});
+                        else
+                            configurePanelRow(1,handles.user.(curImport.panelTag){1},curStruct(1),optionalSelection{:});
+                        end
                         for t=2:numel(curStruct)                            
                             % add rows as necessary
-                            addHandles = feval(curImport.importFcn,handles);                            
-                            configurePanelRow(addHandles,curStruct{t},optionalSelection{:});
+                            addHandles = feval(curImport.importFcn,handles);   
+                            if(iscell(curStruct))
+                                configurePanelRow(t,addHandles,curStruct{t},optionalSelection{:});
+                            else
+                                configurePanelRow(t,addHandles,curStruct(t),optionalSelection{:});
+                            end
                         end
-                    end
-                    
+                    end                    
                 end
             end
         else
@@ -235,16 +240,17 @@ function addedHandles = resizeForAddedRow(handles,resized_panel_h)
         set(h(k),'position',pos);
     end
     
-    
+    panelTag = get(resized_panel_h,'tag');
+    rowIndex = numel(handles.user.(panelTag))+1;
     %add the additional controls depending on the panel being adjusted.
     if(resized_panel_h==handles.panel_psd)      
         h_text = uicontrol(GUI_TEMPLATE.text_channel_selection,'parent',resized_panel_h);
-        hc1 = uicontrol(GUI_TEMPLATE.push_channel_selection,'parent',resized_panel_h,'callback',{@channelSelectionCb,h_text}); %,'string',GUI_TEMPLATE.EDF.labels);
-        h_params = uicontrol(GUI_TEMPLATE.push_parameter_settings,'parent',resized_panel_h,'userdata',handles.user.PSD);
+        hc1 = uicontrol(GUI_TEMPLATE.push_channel_selection,'parent',resized_panel_h,'callback',{@channelSelectionCb,h_text,rowIndex}); %,'string',GUI_TEMPLATE.EDF.labels);
+        h_params = uicontrol(GUI_TEMPLATE.push_parameter_settings,'parent',resized_panel_h,'userdata',handles.user.BATCH_PROCESS.spectral_settings(rowIndex).params);
         userdata.channel_h = hc1;
         userdata.settings_h = h_params;
         h_psd_menu = uicontrol(GUI_TEMPLATE.spectrum,'parent',resized_panel_h,'enable','on',...
-            'callback',{@menu_spectral_method_Callback,[hc1,h_params,h_text]},'userdata',userdata);
+            'callback',{@menu_spectral_method_Callback,[hc1,h_params,h_text],rowIndex},'userdata',userdata);
         rowHandles = [h_psd_menu, hc1, h_params, h_text];
     elseif(resized_panel_h==handles.panel_synth_CHANNEL)
         
@@ -273,8 +279,7 @@ function addedHandles = resizeForAddedRow(handles,resized_panel_h)
         h_menu = uicontrol(GUI_TEMPLATE.evt_method,'parent',resized_panel_h,'callback',{@menu_event_callback,h_check_option,[hc1,hc2],h_params,buttonEventSelectSources});
         rowHandles = [h_menu, h_check_option, hc1, hc2, buttonEventSelectSources, h_params];
     end
-    
-    panelTag = get(resized_panel_h,'tag');
+
     handles.user.(panelTag){end+1} = rowHandles;
     guidata(handles.figure1,handles);
     addedHandles = rowHandles;
@@ -533,11 +538,11 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
         spectral_settings(k).method_label = GUI_TEMPLATE.spectrum_labels{get(psd_spectral_methods_h(k),'value')}; %labels defined in opening function at {'None','PSD','MUSIC'}        
         userdata = get(psd_spectral_methods_h(k),'userdata');
         montageData = get(userdata.channel_h,'userdata');
-        refChannelIndex = montageData.reference_channel_selection-1;  % Need to remove the addional, no channel selected option, which is at 1.
+        refChannelIndex = montageData.reference_channel_index-1;  % Need to remove the addional, no channel selected option, which is at 1.
         if(refChannelIndex>0)
             spectral_settings(k).reference_channel_label = EDF_labels{refChannelIndex}; % "de-cell" it
         end
-        spectral_settings(k).channel_indices = []; % selectedIndices; % leave blank b/c we don't know for sure with batch processing if channels will be at same indices or not in other files.
+        spectral_settings(k).channel_indices = find(montageData.channels_selected); % selectedIndices; %? leave blank b/c we don't know for sure with batch processing if channels will be at same indices or not in other files.
         spectral_settings(k).channel_labels = EDF_labels(montageData.channels_selected);
         spectral_settings(k).params = get(userdata.settings_h,'userdata');
     end
@@ -688,25 +693,30 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
         artifact_settings_handles = cell2mat(artifact_settings_handles);
     end
     
-    artifact_save_image_choices = get(flipud(findobj(handles.panel_artifact,'-regexp','tag','images')),'value');
-    if(iscell(artifact_save_image_choices))
-        artifact_save_image_choices = cell2mat(artifact_save_image_choices);
+    artifact_use_psd_channel = get(flipud(findobj(handles.panel_artifact,'-regexp','tag','check_artifact_use_psd_channel')),'value');
+    if(iscell(artifact_use_psd_channel))
+        artifact_use_psd_channel = cell2mat(artifact_use_psd_channel);
     end
     
     selected_artifacts = artifact_method_values>1;
-    artifact_save_image_choices = artifact_save_image_choices(selected_artifacts);
+    artifact_use_psd_channel = artifact_use_psd_channel(selected_artifacts);
     artifact_settings_handles = artifact_settings_handles(selected_artifacts);
     artifact_method_values = artifact_method_values(selected_artifacts);
     artifact_channel_values = [artifact_channel1_values(selected_artifacts),artifact_channel2_values(selected_artifacts)];
     
-    num_selected_artifacts = sum(selected_artifacts);    
-    artifact_settings = repmat(templateStruct,num_selected_artifacts,1);
+    num_selected_artifacts = sum(selected_artifacts); 
+    
+    
+    
+    artifact_settings = batch.getArtifactStruct(num_selected_artifacts);
 
     for k = 1:num_selected_artifacts
         selected_method = artifact_method_values(k);
         num_reqd_channels = detection_inf.reqd_indices(selected_method);
         
-        artifactStruct.save2img = artifact_save_image_choices(k);
+        artifactStruct = batch.getArtifactStruct();
+        artifactStruct(1).use_psd_channel = artifact_use_psd_channel(k);  % have to use a subscript index the first time. 'A dot name structure assignment is illegal when the structure is empty.  Use a subscript on the structure.'  
+  
         artifactStruct.channel_labels = EDF_labels(artifact_channel_values(k,1:num_reqd_channels));
         artifactStruct.method_label = detection_inf.labels{selected_method};
         artifactStruct.method_function = detection_inf.mfile{selected_method};
@@ -797,10 +807,10 @@ function handles = createGlobalTemplate(handles)
     set([handles.check_event_export_images
         handles.check_artifact_use_psd_channel],'enable','on');
     
-    montageSelection.reference_channel_selection = 1;
+    montageSelection.reference_channel_index = 1;
     montageSelection.channels_selected = [];
     
-    set(handles.push_psd_channel,'userdata',montageSelection,'callback',{@channelSelectionCb,handles.text_psd_channelSelection});
+    set(handles.push_psd_channel,'userdata',montageSelection,'callback',{@channelSelectionCb,handles.text_psd_channelSelection,1});
     src.edit_synth_CHANNEL = get(handles.edit_synth_CHANNEL_name);
     src.push_CHANNEL_configuration = get(handles.push_synth_CHANNEL_settings);   
     src.push_channel_selection = get(handles.push_psd_channel);
@@ -872,18 +882,25 @@ function loadDetectionMethods()
     GUI_TEMPLATE.evt_method.String = evt_label;  %need this here so that newly created rows have these detection options available.
 end
 
-function configurePanelRow(rowHandles, paramStruct, methodSelection)
+function configurePanelRow(rowNum,rowHandles, paramStruct, methodSelection)
     if(~isempty(paramStruct))
         panelTag = get(get(rowHandles(1),'parent'),'tag');
+        
+
         switch lower(panelTag)
             case {'panel_events','panel_artifact'}
                 % 
-                if(nargin<3)
+                if(nargin<4)
                     methodSelection = paramStruct.method_label;
                 end
+
                 setMenuSelection(rowHandles(1),methodSelection);
                 updateDetectorSelection(rowHandles(1),rowHandles(2),rowHandles(3:4),rowHandles(6),rowHandles(5));
-                set(rowHandles(2),'value',paramStruct.save2img);
+                if(strcmpi(panelTag,'panel_events'))
+                    set(rowHandles(2),'value',paramStruct.save2img);
+                else
+                    set(rowHandles(2),'value',paramStruct.use_psd_channel);
+                end
                 setMenuSelection(rowHandles(3),paramStruct.channel_labels(1));
                 if(numel(paramStruct.channel_labels)>1)
                     setMenuSelection(rowHandles(4),paramStruct.channel_labels(2));
@@ -895,14 +912,25 @@ function configurePanelRow(rowHandles, paramStruct, methodSelection)
                 % set(rowHandles(6),'userdata',paramStruct.params);
                
             case 'panel_psd'
-                if(nargin<3)
-                    methodSelection = 'PSD';
+                if(nargin<4)
+                   
+                    methodSelection = paramStruct.method_label;
                 end
-                setMenuSelection(rowHandles(1),methodSelection);
-                paramStruct.channel_labels = paramStruct.channel_labels{1};
-                updateSpectralSelection(rowHandles(1),rowHandles(2),rowHandles(3));
-                setMenuSelection(rowHandles(2),paramStruct.channel_labels);
-                set(rowHandles(3),'userdata',paramStruct);                
+                %                 methodSelection = 'PSD';
+                
+                menuH = rowHandles(1);
+                pushH = rowHandles(2);
+                textH = rowHandles(4);
+                
+                setMenuSelection(menuH,methodSelection);
+                %  paramStruct.channel_labels = paramStruct.channel_labels{1};
+                updateSpectralSelection([rowHandles(1),rowHandles(2),rowHandles(3)]);
+                settingsH = rowHandles(3);
+                montageSelection.channels_selected = paramStruct.channel_indices;
+                montageSelection.reference_channel_index = paramStruct.reference_channel_index;
+                updateChannelSelection(rowNum,montageSelection,pushH, textH);
+                set(settingsH,'userdata',paramStruct.params);
+                
             case 'panel_synth_channel'                
                 
             otherwise
@@ -942,28 +970,39 @@ function edit_edf_directory_Callback(hObject, eventdata, handles)
     
 end
 
-function channelSelectionCb(hObject, evtData, textH)
+function updateChannelSelection(rowNum, montageSelection, pushH, textH)
+
+    selectedIndices = find(montageSelection.channels_selected);
+    numIndicesToLoad = numel(selectedIndices);
+    if(numIndicesToLoad==1)
+        set(textH,'string','1 channel selected');
+    else
+        set(textH,'string',sprintf('%d channels selected',numIndicesToLoad));
+    end    
+    set(pushH,'userdata',montageSelection);
+%     handles = guidata(pushH);
+%     handles.user.BATCH_PROCESS.spectral_settings(rowNum).channel_indices = selectedIndices;
+%     handles.user.BATCH_PROCESS.spectral_settings(rowNum).channel_labels = montageSelection;
+    
+    
+
+end
+function channelSelectionCb(hObject, evtData, textH, rowNum)
 
     global GUI_TEMPLATE;
     montageSelection = get(hObject,'userdata');
     
     configParams.allowUnchecking = true;
     configParams.allowReferenceChannelSelection = true;
-    configParams.reference_channel_selection = montageSelection.reference_channel_selection;
+    configParams.reference_channel_index = montageSelection.reference_channel_index;
     
     montageSelection=montage_dlg(GUI_TEMPLATE.EDF.labels,find(montageSelection.channels_selected), configParams);
     
     if(~isempty(montageSelection))
+        montageSelection.channel_indices = find(montageSelection.channels_selected);
+        montageSelection.channel_labels = GUI_TEMPLATE.EDF.labels(montageSelection.channel_indices);
         
-        selectedIndices = find(montageSelection.channels_selected);        
-        numIndicesToLoad = numel(selectedIndices);
-        if(numIndicesToLoad==1)
-            set(textH,'string','1 channel selected');
-        else
-            set(textH,'string',sprintf('%d channels selected',numIndicesToLoad));
-        end
-        
-        set(hObject,'userdata',montageSelection);
+        updateChannelSelection(rowNum, montageSelection,hObject,textH);
         % guidata(hObject);  %is this necessary?
 
     end
@@ -1128,7 +1167,7 @@ function push_psd_settings_Callback(hObject, eventdata)
     new_settings = psd_dlg(psd);  %.wintype,psd.FFT_window_sec,psd.interval);
     
     if(new_settings.modified)
-        new_settings = rmfield(new_settings,'modified');
+        new_settings = rmfield(new_settings,'modified');        
         set(hObject,'userdata',new_settings);
     end
 end
@@ -1355,9 +1394,7 @@ function edit_selectPlaylist_ButtonDownFcn(hObject, eventdata, handles)
     % hObject    handle to edit_selectPlaylist (see GCBO)
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
-    
-    playlist = getPlaylist(handles,'-gui');
-    
+    playlist = getPlaylist(handles,'-gui');    
     handles.user.playlist = playlist;
     checkPathForEDFs(handles,handles.user.playlist);
     guidata(hObject,handles);
@@ -1384,7 +1421,6 @@ function exportFilename = exportSetup(edfPathname, BATCH_PROCESS,playlist, sugge
 end
 
 function push_exportSetup_Callback(hObject, eventdata, handles)
-
     [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles);
     configFilename = handles.user.BATCH_PROCESS.configuration_file;
     configFilename = exportSetup(pathname, BATCH_PROCESS,playlist, configFilename);
@@ -1423,7 +1459,7 @@ function relaunchWithImportFile(figureH,importFile)
                 MARKING.SETTINGS.BATCH_PROCESS = handles.user.BATCH_PROCESS; %need to return this to the global for now            
                 delete(figureH);
             end
-            batch_run('importfile',importFile);
+            batchProcessDlg('importfile',importFile);
         end
     end    
 end

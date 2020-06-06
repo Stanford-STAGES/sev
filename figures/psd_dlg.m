@@ -185,13 +185,17 @@ for f=1:numel(fnames)
     curName = fnames{f};
     curValue = handles.user.(curName);
     originalValue = handles.original.(curName);
+    try
     if(ischar(curValue))
         if(~strcmpi(originalValue,curValue))
             PSD.modified = true;
         end
-    elseif(originalValue~=curValue)
+    elseif(~isequal(originalValue,curValue))
         PSD.modified = true;
-    end        
+    end
+    catch me
+        showME(me)
+    end
     PSD.(curName) = curValue;
 end
 

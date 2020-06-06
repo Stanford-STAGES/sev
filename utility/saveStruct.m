@@ -36,7 +36,7 @@ function saveStruct(fid,root,varargin)
 %Author: Hyatt Moore IV
 %21JULY2010
 %Stanford University
-
+try
 if(isempty(varargin))
     if(isstruct(root))
         fields = fieldnames(root);
@@ -50,14 +50,21 @@ if(isempty(varargin))
     end
 
 else
-    field = getfield(root,varargin{:});    
+    try
+        field = getfield(root,varargin{:}); % no longer works as well for me...
+    catch me
+        field = [];
+    end
     if(isstruct(field))
         fields = fieldnames(field);
         for k=1:numel(fields)
             saveStruct(fid,root,varargin{:},fields{k});
         end
-    else
+    elseif(~isempty(field))
         try
+            if(iscell(field))
+                field = '';
+            end
             fprintf(fid,'%s\t%s\r',strcat_with_dot(varargin{:}),num2str(field));
         catch me
             showME(me);
@@ -66,7 +73,9 @@ else
     end
 end
 
-
+catch me
+    showME(me);
+end
     
 function out_str = strcat_with_dot(root,varargin)
 %like strcat, except here a '.' is placed in between each element

@@ -78,18 +78,22 @@ units = 'pixels';
 selected_handles = [];
 runParams.allowUnchecking = false;
 runParams.allowReferenceChannelSelection = false;
-runParams.reference_channel_selection = 1;
+runParams.reference_channel_index = 1;
 if(~isempty(varargin))
     if(numel(varargin)>0)
         selected_handles = varargin{1};
     end
     if(numel(varargin)>1)
         runParams = varargin{2};
+        
+        if(isempty(runParams.reference_channel_index))
+            runParams.reference_channel_index = 1;
+        end
     end
 end
 
 fig = handles.figure1;
-set(fig,'visible','on','units',units,'CloseRequestFcn',@closeFigureCallback);
+set(fig,'visible','on','units',units,'CloseRequestFcn',@closeFigureCallback,'name','Channel(s)');
 
 checkbox_handles = zeros(1,numel(channel_labels));
 % radio_handles = zeros(1,numel(channel_labels));
@@ -135,7 +139,7 @@ rad_extent = [0 0 20 spacing];
 % fig_height = pb_extent(4)+spacing*3+cb_extent(4)*numel(channel_labels);
 
 fig_width = max([2*pb_extent(3)+spacing*3,(cb_extent(3)+spacing)*num_cols+spacing+rad_extent(3)]);
-fig_height = pb_extent(4)+spacing*3+cb_extent(4)*num_rows;
+fig_height = pb_extent(4)+spacing*3+cb_extent(4)*(num_rows+runParams.allowReferenceChannelSelection*3);
 
 fig_pos = get(fig,'position');
 fig_pos(3:4) = [fig_width, fig_height];
@@ -171,8 +175,8 @@ end
 
 % if we are allowed to have a reference channel.  
 if(runParams.allowReferenceChannelSelection)
-    if(runParams.reference_channel_selection>numel(channel_labels)+1)
-        runParams.reference_channel_selection = 1;
+    if(runParams.reference_channel_index>numel(channel_labels))
+        runParams.reference_channel_index = 1;
     end
 
     cur_row = cur_row+1;
@@ -183,7 +187,7 @@ if(runParams.allowReferenceChannelSelection)
     cur_row = cur_row+1;
     pos = [x_offset+(spacing+cb_width)*(cur_col-1), fig_height-spacing*(cur_row)-spacing, cb_extent(3:4)];
     handles.menu_selection = uicontrol(fig,'style','popupmenu','string',['None';channel_labels],...
-        'units',units,'visible','on','value',runParams.reference_channel_selection,'position',pos,...
+        'units',units,'visible','on','value',runParams.reference_channel_index,'position',pos,...
         'fontsize',12,'tag','menu_selection');
 else
     handles.menu_selection = [];
@@ -262,7 +266,7 @@ end
 % get channel indices, and if the result is 0, then just return empty since
 % the user selected 'nothing selected'.
 if(runParams.allowReferenceChannelSelection)
-    output.reference_channel_selection = get(handles.menu_selection,'value');    
+    output.reference_channel_index = get(handles.menu_selection,'value');    
 end
 
 % For backwards compatibility to distinguish between unselecting

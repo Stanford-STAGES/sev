@@ -126,6 +126,9 @@ classdef  CLASS_settings < handle
             if(~isempty(fopen(fid)))
                 file_open = true;
                 pat = '^([^\.\s]+)|\.([^\.\s]+)|\s+(.*)+$';
+                
+                %                 pat = '^([^\s]+)\s+(.*)+$';
+                
             else
                 file_open = false;
             end
@@ -141,13 +144,15 @@ classdef  CLASS_settings < handle
                 if(~ischar(curline))
                     file_open = false;
                 else
-                    tok = regexp(strtrim(curline),pat,'tokens');
+                    tok = regexp(curline,pat,'tokens');  % removed the strtrim which was causing issues with tokenized expressions which had no value (i.e. empty string)
                     if(numel(tok)>1 && ~strcmpi(tok{1},'-last') && isempty(strfind(tok{1}{1},'#')))
                         %hack/handle the empty case
                         if(numel(tok)==2)
                             tok{3} = {''};
                         end
                         pstruct = CLASS_settings.tokens2struct(pstruct,tok);
+                    else
+                        % a blank line
                     end
                 end
                 catch me
@@ -186,8 +191,11 @@ classdef  CLASS_settings < handle
                 else
                     evalmsg = ['pstruct' fields '=str2double(tok{end}{:});'];
                 end
-                
-                eval(evalmsg);
+                try
+                    eval(evalmsg);
+                catch me
+                    
+                end
             end
         end
         
@@ -404,8 +412,9 @@ classdef  CLASS_settings < handle
                                     cur_sub_field = structFnames{g};
                                     %check if there is a corruption
                                     if(~isfield(paramStruct.(cur_field),cur_sub_field))
-                                        fprintf('\nSettings file corrupted.  The %s.%s parameter is missing.  Using initial/default SEV settings\n\n', cur_field,cur_sub_field);
-                                        return;
+                                        paramStruct.(cur_field).(cur_sub_field) = obj.(cur_field).(cur_sub_field);
+                                        fprintf('Settings file warning.  The %s.%s parameter is missing.  Using the initial/default SEV value for this parameter.\n', cur_field,cur_sub_field);
+                                        % return;
                                     end                            
 
                                 end

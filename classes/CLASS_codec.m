@@ -430,10 +430,10 @@ classdef CLASS_codec < handle
             % floats for the remaing 'S'tage and 'E'poch columns
             
             % The default - uncomment after 1/20/2019
-            %scanStr = [repmat('%f\t',1,maxFrequencyToDisplayIndex),repmat('%*f\t',1,numFrequencyFieldsAfterMaxDisplayFrequency),repmat('%f\t',1,numMetaDataFields-3),'%*s\t%f\t%f'];
+            scanStr = [repmat('%f\t',1,maxFrequencyToDisplayIndex),repmat('%*f\t',1,numFrequencyFieldsAfterMaxDisplayFrequency),repmat('%f\t',1,numMetaDataFields-3),'%*s\t%f\t%f'];
             
             % For when no artifact types exist
-            scanStr = [repmat('%f\t',1,maxFrequencyToDisplayIndex),repmat('%*f\t',1,numFrequencyFieldsAfterMaxDisplayFrequency),repmat('%f\t',1,numMetaDataFields-3),'\t%f\t%f'];
+            % scanStr = [repmat('%f\t',1,maxFrequencyToDisplayIndex),repmat('%*f\t',1,numFrequencyFieldsAfterMaxDisplayFrequency),repmat('%f\t',1,numMetaDataFields-3),'\t%f\t%f'];
             
             column_names(strcmpi(column_names,'A_type'))=[]; %get rid of this column in the name since we have removed it at the end of our scanStr with %*s
             
@@ -518,6 +518,8 @@ classdef CLASS_codec < handle
                     artifactFreeStagePSD = [];
                     artifactFreeStagePower = [];
                     artifactFreeStagePercentPower = [];
+                    artifactFreeStageDurationSec = 0;
+                    okayStageDurationTotal_sec = 0;
                 else
                     stageGroupDuration_sec = (stageGroups(:,2)-stageGroups(:,1))*interval_sec + (winlen_sec-interval_sec);
                     okayStages = stageGroupDuration_sec >= actualMinDuration_sec;
@@ -555,14 +557,17 @@ classdef CLASS_codec < handle
                     end
                 end
                 
+                
                 % this means that we exclude artifacts in the second case
                 outputStruct.psd.(stageStringLabels{s}).(artifactLabels{1}) = stagePSD;
                 outputStruct.power.(stageStringLabels{s}).(artifactLabels{1}) = stagePower;
                 outputStruct.percent.(stageStringLabels{s}).(artifactLabels{1}) = stagePercentPower;
+                outputStruct.duration_s.(stageStringLabels{s}).(artifactLabels{1}) = okayStageDurationTotal_sec;                
                 
                 outputStruct.psd.(stageStringLabels{s}).(artifactLabels{2}) = artifactFreeStagePSD;
                 outputStruct.power.(stageStringLabels{s}).(artifactLabels{2}) = artifactFreeStagePower;
                 outputStruct.percent.(stageStringLabels{s}).(artifactLabels{2}) = artifactFreeStagePercentPower;
+                outputStruct.duration_s.(stageStringLabels{s}).(artifactLabels{2}) = artifactFreeStageDurationSec;
             end
         end
         

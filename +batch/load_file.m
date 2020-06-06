@@ -194,21 +194,44 @@ for r = 1:numel(detection_settings)
 end
 
 function [loadIndex, EDF_indices2load] = getOrSetLoadIndex(label, EDF_labels, EDF_indices2load)
-    ind2load = find(strcmp(label,EDF_labels)); %this is the index into EDF_labels, the .EDF
-    
-    %handle the cases when I do not have the right referencing available...
-    if(isempty(ind2load))
+
+    if(isempty(label))
+        loadIndex = [];
+    else
+        ind2load = find(strcmp(label,EDF_labels)); %this is the index into EDF_labels, the .EDF
         
-        %handle the case where I need a referenced label,
-        indexPair = findAlternativeChannels(label,EDF_labels);
-        
-        if(isempty(indexPair))
-            ME = MException('Batch:load_file',['Channel label (',label,') not found in this EDF.']);
-            throw(ME);
-        else
-            %handle the case of the indexPair existing
-            ind2load = indexPair(1);
+        %handle the cases when I do not have the right referencing available...
+        if(isempty(ind2load))
             
+            %handle the case where I need a referenced label,
+            indexPair = findAlternativeChannels(label,EDF_labels);
+            
+            if(isempty(indexPair))
+                ME = MException('Batch:load_file',['Channel label (',label,') not found in this EDF.']);
+                throw(ME);
+            else
+                %handle the case of the indexPair existing
+                ind2load = indexPair(1);
+                
+                %check if this index has already been marked for labeling
+                loadedInd = [];
+                for k=1:numel(EDF_indices2load)
+                    if(ind2load == EDF_indices2load{k}(1))
+                        loadedInd = k;
+                        break;
+                    end
+                end
+                
+                if(isempty(loadedInd))
+                    %update the vector of indices to load to contain the index that
+                    %was found in the EDF header
+                    EDF_indices2load{end+1} = ind2load;
+                    loadIndex = numel(EDF_indices2load);
+                else
+                    loadIndex = loadedInd;
+                end
+            end
+        else
             %check if this index has already been marked for labeling
             loadedInd = [];
             for k=1:numel(EDF_indices2load)
@@ -217,37 +240,19 @@ function [loadIndex, EDF_indices2load] = getOrSetLoadIndex(label, EDF_labels, ED
                     break;
                 end
             end
-            
+            %if it has not been marked for labeling, then mark it and adjust
+            %load counts
             if(isempty(loadedInd))
                 %update the vector of indices to load to contain the index that
                 %was found in the EDF header
                 EDF_indices2load{end+1} = ind2load;
                 loadIndex = numel(EDF_indices2load);
+                
+                %otherwise, just update the class_channel_indices reference vector
+                %to the previously assigned CHANNELS_CONTAINER index
             else
                 loadIndex = loadedInd;
             end
-        end
-    else
-        %check if this index has already been marked for labeling
-        loadedInd = [];
-        for k=1:numel(EDF_indices2load)
-            if(ind2load == EDF_indices2load{k}(1))
-                loadedInd = k;
-                break;
-            end
-        end
-        %if it has not been marked for labeling, then mark it and adjust
-        %load counts
-        if(isempty(loadedInd))
-            %update the vector of indices to load to contain the index that
-            %was found in the EDF header
-            EDF_indices2load{end+1} = ind2load;
-            loadIndex = numel(EDF_indices2load);
-            
-            %otherwise, just update the class_channel_indices reference vector
-            %to the previously assigned CHANNELS_CONTAINER index
-        else
-            loadIndex = loadedInd;
         end
     end
 

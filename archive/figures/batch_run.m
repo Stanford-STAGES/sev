@@ -119,7 +119,7 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
                 load(params.importFile,'-mat','edfPathname','BATCH_PROCESS','playlist');
                 BATCH_PROCESS.configuration_file = params.importFile;
                 handles.user.BATCH_PROCESS = BATCH_PROCESS;
-                handles.user.PSD = BATCH_PROCESS.PSD_settings{1};
+                handles.user.PSD = BATCH_PROCESS.spectral_settings;
                 % handles.user.MUSIC = BATCH_PROCESS.MUSIC_settings{1};
                 
                 setEDFPathname(handles,edfPathname);
@@ -133,8 +133,8 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
                 
                 batchImport.artifact_settings.importFcn = @addArtifactRow;
                 batchImport.artifact_settings.panelTag = 'panel_artifact';
-                batchImport.PSD_settings.importFcn = @addPSDRow;                
-                batchImport.PSD_settings.panelTag = 'panel_psd';
+                batchImport.spectral_settings.importFcn = @addPSDRow;                
+                batchImport.spectral_settings.panelTag = 'panel_psd';
                 
                 % Overly complicated to support music and psd as separate
                 % groups right now.  Will be better t adjust code at some
@@ -153,16 +153,22 @@ function batch_run_OpeningFcn(hObject, eventdata, handles, varargin)
                     end
                     curStruct = BATCH_PROCESS.(fn);
                     curImport = batchImport.(fn);
-                    if(iscell(curStruct) && ~isempty(curStruct))
-                        
-                        configurePanelRow(handles.user.(curImport.panelTag){1},curStruct{1},optionalSelection{:});
+                    if((iscell(curStruct)|| isstruct(curStruct)) && ~isempty(curStruct))                        
+                        if(iscell(curStruct))
+                            configurePanelRow(handles.user.(curImport.panelTag){1},curStruct{1},optionalSelection{:});
+                        else
+                            configurePanelRow(handles.user.(curImport.panelTag){1},curStruct(1),optionalSelection{:});
+                        end
                         for t=2:numel(curStruct)                            
                             % add rows as necessary
-                            addHandles = feval(curImport.importFcn,handles);                            
-                            configurePanelRow(addHandles,curStruct{t},optionalSelection{:});
+                            addHandles = feval(curImport.importFcn,handles);   
+                            if(iscell(curStruct))
+                                configurePanelRow(addHandles,curStruct{t},optionalSelection{:});
+                            else
+                                configurePanelRow(addHandles,curStruct(t),optionalSelection{:});
+                            end
                         end
-                    end
-                    
+                    end                    
                 end
             end
         else
@@ -717,13 +723,13 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
         artifact_settings_handles = cell2mat(artifact_settings_handles);
     end
     
-    artifact_save_image_choices = get(flipud(findobj(handles.panel_artifact,'-regexp','tag','images')),'value');
-    if(iscell(artifact_save_image_choices))
-        artifact_save_image_choices = cell2mat(artifact_save_image_choices);
+    artifact_use_psd_choices = get(flipud(findobj(handles.panel_artifact,'-regexp','tag','check_artifact_use_psd_channel')),'value');
+    if(iscell(artifact_use_psd_choices))
+        artifact_use_psd_choices = cell2mat(artifact_use_psd_choices);
     end
     
     selected_artifacts = artifact_method_values>1;
-    artifact_save_image_choices = artifact_save_image_choices(selected_artifacts);
+    artifact_use_psd_choices = artifact_use_psd_choices(selected_artifacts);
     artifact_settings_handles = artifact_settings_handles(selected_artifacts);
     artifact_method_values = artifact_method_values(selected_artifacts);
     artifact_channel_values = [artifact_channel1_values(selected_artifacts),artifact_channel2_values(selected_artifacts)];
@@ -735,7 +741,7 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
         selected_method = artifact_method_values(k);
         num_reqd_channels = detection_inf.reqd_indices(selected_method);
         
-        artifactStruct.save2img = artifact_save_image_choices(k);
+        artifactStruct.use_psd_channel = artifact_use_psd_choices(k);
         artifactStruct.channel_labels = EDF_labels(artifact_channel_values(k,1:num_reqd_channels));
         artifactStruct.method_label = detection_inf.labels{selected_method};
         artifactStruct.method_function = detection_inf.mfile{selected_method};
@@ -775,7 +781,7 @@ function [pathname, BATCH_PROCESS,playlist] = getBatchSettings(handles)
         artifact_settings{k} = artifactStruct;
     end
     
-    BATCH_PROCESS.artifact_settings = artifact_settings;
+    BATCH_PROCESS.artifact_settings = cell2mat(artifact_settings);
     
     pathname = get(handles.edit_edf_directory,'string');
     playlist = getPlaylist(handles);
@@ -901,7 +907,12 @@ function configurePanelRow(rowHandles, paramStruct, methodSelection)
                 end
                 setMenuSelection(rowHandles(1),methodSelection);
                 updateDetectorSelection(rowHandles(1),rowHandles(2),rowHandles(3:4),rowHandles(6),rowHandles(5));
-                set(rowHandles(2),'value',paramStruct.save2img);
+                
+                if(strcmpi(panelTag,'panel_events'))
+                    set(rowHandles(2),'value',paramStruct.save2img);
+                else
+                    set(rowHandles(2),'value',paramStruct.use_psd_channel);
+                end
                 setMenuSelection(rowHandles(3),paramStruct.channel_labels(1));
                 if(numel(paramStruct.channel_labels)>1)
                     setMenuSelection(rowHandles(4),paramStruct.channel_labels(2));
@@ -1264,7 +1275,8 @@ function updateSave2ImageOptions(handles)
     %batch_process settings which can be changed and update
     
     global GUI_TEMPLATE;
-    image_checkboxes = [findobj(handles.panel_events,'-regexp','tag','images');findobj(handles.panel_artifact,'-regexp','tag','images')];
+    image_checkboxes = findobj(handles.panel_events,'-regexp','tag','images');
+
     
     img_h = [handles.text_event_export_img;image_checkboxes];
     

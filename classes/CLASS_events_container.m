@@ -841,7 +841,7 @@ classdef CLASS_events_container < handle
                         EDF_index = zeros(1,numel(parent_index));
                         for k=1:numel(parent_index)
                             EDF_index(k) = obj.CHANNELS_CONTAINER.cell_of_channels{parent_index(k)}.EDF_index(1);  %sometimes there are two EDF indices here when more than one channel is used in synthesizing the event - and will go back to the original one then.
-                        end;
+                        end
                         
                         parent_index = parent_index(1); %avoid problems wiht multiple parents, as the case with ocular movements.
                         
@@ -856,7 +856,7 @@ classdef CLASS_events_container < handle
                         parent_EDF_label = obj.defaults.parent_channel_title;
                         parent_channel_samplerate = obj.defaults.parent_channel_samplerate;
                         EDF_index = 0;
-                    end;
+                    end
                     class_channel_index = parent_index;
                     
                     obj.channel_vector(obj.num_events) = parent_index;
@@ -892,7 +892,7 @@ classdef CLASS_events_container < handle
                 end
             else
                 disp 'empty event_data';
-            end;
+            end
         end
         
         % =================================================================

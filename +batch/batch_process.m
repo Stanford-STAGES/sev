@@ -27,12 +27,12 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
         %     file_list = dir([fullfile(path, '*.EDF');fullfile(path, '*.edf')]);
         %pc's do not have a problem with case; unfortunately the other side
         %does
-        %     if(ispc)
-        %         file_list = dir(fullfile(pathname,'*.EDF'));
-        %     else
-        %         file_list = [dir(fullfile(pathname, '*.EDF'));  dir(fullfile(pathname, '*.edf'))]; %dir(fullfile(path, '*.EDF'))];
-        %     end
-        file_list = dir(fullfile(pathname,'*.EDF'));
+        if(ispc)
+            file_list = dir(fullfile(pathname,'*.EDF'));
+        else
+            file_list = [dir(fullfile(pathname, '*.EDF'));  dir(fullfile(pathname, '*.edf'))]; %dir(fullfile(path, '*.EDF'))];
+        end
+        
         if(~isempty(playlist))
             file_list = filterPlaylist(file_list, playlist);
         end
@@ -90,6 +90,18 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
             end
             
             
+            spectral_settings = BATCH_PROCESS.spectral_settings;
+            
+            for s=1:numel(BATCH_PROCESS.artifact_settings)
+                if(BATCH_PROCESS.artifact_settings(s).use_psd_channel)
+                    if(~isempty(spectral_settings))
+                        BATCH_PROCESS.artifact_settings(s).channel_labels = spectral_settings(1).channel_labels;
+                    else
+                        BATCH_PROCESS.artifact_settings(s).channel_labels = [];
+                    end
+                end
+            end
+            
             if(BATCH_PROCESS.output_files.log_checkbox)
                 BATCH_PROCESS.start_time = datestr(now,'yyyymmmdd_HH_MM_SS');
                 log_filename = fullfile(BATCH_PROCESS.output_path.current,[BATCH_PROCESS.output_files.log_filename,BATCH_PROCESS.start_time,'.txt']);
@@ -99,6 +111,8 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                 
                 detectorStructs = [struct('tag','event_settings','title','event detectors')
                     struct('tag','artifact_settings','title','artifact detectors')];
+                
+                % Goes through artifact and detector settings here
                 for d=1:numel(detectorStructs)
                     dStruct = detectorStructs(d);
                     detector_settings = BATCH_PROCESS.(dStruct.tag);
@@ -107,14 +121,20 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                         fprintf(log_fid,'The following %s were run with this batch job.\n',dStruct.title);
                         for k=1:numel(detector_settings)
                             method_label = char(detector_settings(k).method_label);
-                            pStruct = detector_settings(k).pBatchStruct;
+                            
                             channel_labels = reshape(char(detector_settings(k).channel_labels)',1,[]);
                             batch_mode_label = char(detector_settings(k).batch_mode_label);
                             
                             
                             fprintf(log_fid,'%u.\t%s\t(labeled as ''%s'')\tApplied to Channel(s): %s',k,method_label,batch_mode_label,channel_labels);
                             
-                            %put one of these two in the log file
+                            if(isfield(detector_settings(k),'pBatchStruct'))
+                                pStruct = detector_settings(k).pBatchStruct;
+                            else
+                                pStruct = [];
+                            end
+                            
+                            %put one of these two in the log file                            
                             if(numel(pStruct)>0)
                                 fprintf(log_fid,'\t(Parameter, start, stop, num steps):');
                                 for c=1:numel(pStruct)
@@ -131,10 +151,6 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                     end
                 end
                 
-                spectral_settings = BATCH_PROCESS.spectral_settings;
-                event_settings = BATCH_PROCESS.event_settings;
-                artifact_settings = BATCH_PROCESS.artifact_settings;
-                image_settings = struct(); % filled in below
                 
                 for s=1:numel(spectral_settings)
                     curSetting = spectral_settings(s);
@@ -155,7 +171,9 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                 BATCH_PROCESS.start_time = ' ';
             end
             
-            
+            event_settings = BATCH_PROCESS.event_settings;
+            image_settings = struct(); % filled in below
+
             if(BATCH_PROCESS.images.save2img)
                 image_settings.limit_count = BATCH_PROCESS.images.limit_count*BATCH_PROCESS.images.limit_flag;
                 image_settings.buffer_sec = BATCH_PROCESS.images.buffer_sec*BATCH_PROCESS.images.buffer_flag;
@@ -168,16 +186,9 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                             mkdir(event_images_path);
                         end
                     end
-                end
-                for k = 1:numel(artifact_settings)
-                    if(artifact_settings(k).save2img)
-                        %put images in subdirectory based on detection method
-                        artifact_images_path = fullfile(full_events_images_path,artifact_settings(k).method_label);
-                        if(~isdir(artifact_images_path))
-                            mkdir(artifact_images_path);
-                        end
-                    end
-                end
+                end                
+                % No longer support save2imge for artifacts ... 4/13/2019
+                % @Hyatt
             end
             
             for k = 1:numel(event_settings)
@@ -376,44 +387,31 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                 
                                 if(numel(artifact_settings)>0)
                                     for k = 1:numel(artifact_settings)
-                                        
-                                        function_name = artifact_settings(k).method_function;
-                                        %                             function_call = [detection_path,'.',function_name];
-                                        
-                                        source_indices = artifact_settings(k).channel_indices;
-                                        
-                                        detectStruct = batch_ARTIFACT_CONTAINER.evaluateDetectFcn(function_name,source_indices, artifact_settings(k).params);
-                                        
-                                        %                             detectStruct = feval(function_call,source_indices,params);
-                                        sourceStruct = [];
-                                        sourceStruct.channel_indices = source_indices;
-                                        sourceStruct.algorithm = function_name;
-                                        sourceStruct.editor = 'none';
-                                        if(~isempty(detectStruct.new_events))
+                                        if(~artifact_settings(k).use_psd_channel)
+                                            function_name = artifact_settings(k).method_function;
+                                            source_indices = artifact_settings(k).channel_indices(:);
                                             
-                                            batch_ARTIFACT_CONTAINER.addEvent(detectStruct.new_events,artifact_settings(k).method_label,0,sourceStruct,detectStruct.paramStruct);
-                                            if(artifact_settings(k).save2img)
-                                                
-                                                %put these images in their own subdirectory based on
-                                                %patients identifier
-                                                artifact_images_path = fullfile(full_artifacts_images_path,cur_filename(1:end-4));
-                                                if(~isdir(artifact_images_path))
-                                                    mkdir(artifact_images_path);
-                                                end
-                                                img_filename_prefix = [cur_filename(1:end-4),'-',artifact_settings(k).method_label];
-                                                full_img_filename_prefix = fullfile(artifact_images_path,img_filename_prefix);
-                                                batch_ARTIFACT_CONTAINER.save2images(k,full_img_filename_prefix,image_settings);
+                                            sourceStruct = [];
+                                            sourceStruct.channel_indices = source_indices;
+                                            sourceStruct.algorithm = function_name;
+                                            sourceStruct.editor = 'none';
+                                            
+                                            detectStruct = batch_ARTIFACT_CONTAINER.evaluateDetectFcn(function_name,sourceStruct.channel_indices, artifact_settings(k).params);
+                                            
+                                            if(~isempty(detectStruct.new_events))
+                                                batch_ARTIFACT_CONTAINER.addEvent(detectStruct.new_events,artifact_settings(k).method_label,0,sourceStruct,detectStruct.paramStruct);
+                                            else %add empty
+                                                %                         events as well so that we can show what was and
+                                                %                         was not met in the periodogram output...
+                                                batch_ARTIFACT_CONTAINER.addEmptyEvent(artifact_settings(k).method_label,0,sourceStruct,detectStruct.paramStruct);
                                             end
                                             
-                                        else %add empty
-                                            %                         events as well so that we can show what was and
-                                            %                         was not met in the periodogram output...
-                                            batch_ARTIFACT_CONTAINER.addEmptyEvent(artifact_settings(k).method_label,0,sourceStruct,detectStruct.paramStruct);
+                                            numEvents = batch_ARTIFACT_CONTAINER.num_events;
+                                            batch_ARTIFACT_CONTAINER.cell_of_events{numEvents}.batch_mode_label = artifact_settings(k).batch_mode_label;
                                             
                                         end
-                                        batch_ARTIFACT_CONTAINER.cell_of_events{k}.batch_mode_label = artifact_settings(k).batch_mode_label;
-                                        
                                     end
+                                    
                                     if(BATCH_PROCESS.output_files.save2mat)
                                         batch_ARTIFACT_CONTAINER.save2mat(artifact_filenames);
                                     end
@@ -423,8 +421,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                     if(BATCH_PROCESS.output_files.save2txt)
                                         batch_ARTIFACT_CONTAINER.save2txt(artifact_filenames);
                                     end
-                                end
-                                
+                                end                                
                                 
                                 %PROCESS THE EVENTS
                                 if(numel(event_settings)>0)
@@ -561,10 +558,13 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                 % %                         save_art_stats_Callback(hObject, eventdata, handles);
                                 %                           batch.saveArtifactandStageStatistics();
                                 %                     end
-                                parSpectral_settings = parBATCH_PROCESS.spectral_settings;
-                                for k = 1:numel(parSpectral_settings)   
-                                    specSettings = parSpectral_settings(k);
-                                    channel_label = specSettings.channel_labels{:};
+                                spectral_settings = parBATCH_PROCESS.spectral_settings;
+                                for k = 1:numel(spectral_settings)   
+                                    specSettings = spectral_settings(k);
+                                    
+                                    % I could have multiple channel indices
+                                    % now ...
+                                    % channel_label = specSettings.channel_labels{:};
                                     channel_indices = specSettings.channel_indices;
                                     switch lower(specSettings.method_label)
                                         case 'psd'
@@ -590,11 +590,52 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                             chObj.dereferenceWithChannel(refChObj);
                                             channel_label = chObj.title;
                                             filename_out = fullfile(full_psd_path,[cur_filename(1:end-3), channel_label,'.', parBATCH_PROCESS.output_files.psd_filename]);
-
                                             
                                             
-                                            feval(saveMethod,chObj,batch_STAGES,parSpectral_settings(k).params,...
-                                                filename_out,batch_ARTIFACT_CONTAINER,parBATCH_PROCESS.start_time);
+                                            if(numel(artifact_settings)>0)
+                                                
+                                                % I need a second artifact
+                                                % container because it may
+                                                % be that the previous
+                                                % artifact container could
+                                                % channels not associated
+                                                % with power spectrum.
+                                                % Ideally, I will copy the
+                                                % other artifact container
+                                                % and add to it here, but
+                                                % it is tricky to just make
+                                                % a copy of a class.
+                                                batch_second_ARTIFACT_CONTAINER = CLASS_events_container([],[],parBATCH_PROCESS.base_samplerate,batch_STAGES); %this global variable may be checked in output functions and
+                                                batch_second_ARTIFACT_CONTAINER.CHANNELS_CONTAINER = batch_CHANNELS_CONTAINER;
+                                                
+                                                for a = 1:numel(artifact_settings)                                                    
+                                                    
+                                                    if(artifact_settings(a).use_psd_channel)
+                                                        function_name = artifact_settings(a).method_function;
+                                                        sourceStruct = [];
+                                                        sourceStruct.channel_indices = chInd;
+                                                        sourceStruct.algorithm = function_name;
+                                                        sourceStruct.editor = 'none';
+                                                        detectStruct = batch_second_ARTIFACT_CONTAINER.evaluateDetectFcn(function_name,sourceStruct.channel_indices, artifact_settings(a).params);
+                                            
+                                                        if(~isempty(detectStruct.new_events))
+                                                            batch_second_ARTIFACT_CONTAINER.addEvent(detectStruct.new_events,artifact_settings(a).method_label,0,sourceStruct,detectStruct.paramStruct);
+                                                        else %add empty
+                                                            %                         events as well so that we can show what was and
+                                                            %                         was not met in the periodogram output...
+                                                            batch_second_ARTIFACT_CONTAINER.addEmptyEvent(artifact_settings(a).method_label,0,sourceStruct,detectStruct.paramStruct);
+                                                        end
+                                                        
+                                                        numEvents = batch_second_ARTIFACT_CONTAINER.num_events;
+                                                        batch_second_ARTIFACT_CONTAINER.cell_of_events{numEvents}.batch_mode_label = artifact_settings(a).batch_mode_label;
+                                                        
+                                                    end
+                                            
+                                                end
+                                            end
+                                            
+                                            feval(saveMethod,chObj,batch_STAGES,spectral_settings(k).params,...
+                                                filename_out,batch_second_ARTIFACT_CONTAINER,parBATCH_PROCESS.start_time);
                                         end
                                     end                                    
                                 end

@@ -37,7 +37,7 @@ classdef CLASS_events_toolbox_dialog < handle
         detection_path; %directory where detections are stored 
         detection_inf_file;  %filename that contains detector information
         updated_event_index; %index of the newly added/updated event, if any..
-    end;
+    end
     
     methods
         function obj = CLASS_events_toolbox_dialog()
@@ -63,7 +63,7 @@ classdef CLASS_events_toolbox_dialog < handle
                obj.detection_inf_file = 'detection.inf';
                obj.updated_event_index = [];
 %                obj.filter_path
-        end;
+        end
         
         function obj = run(obj)
             global EVENT_CONTAINER;
@@ -175,7 +175,7 @@ classdef CLASS_events_toolbox_dialog < handle
                 popup.sources = zeros(max_num_sources,1);
                 if(numel(obj.channel_selections)~=obj.num_sources)
                     obj.channel_selections = ones(obj.num_sources,1); %set them all to the first element then.
-                end;
+                end
                 for k=1:min(obj.num_sources,max_num_sources)
                     popup.sources(k)=uicontrol('style','popupmenu','units',units,...
                         'parent',obj.dialog_handle,'string',obj.channel_names,...
@@ -185,7 +185,7 @@ classdef CLASS_events_toolbox_dialog < handle
                     set(popup.sources(k),'units',units','position',[cur_pos(1:2),extent(3:4)]);
                     cur_pos(1)=cur_pos(1)+extent(3)+delta;  %move to the right...
                     
-                end;
+                end
                 
                 max_width = max(max_width,cur_pos(1));
                 
@@ -199,7 +199,7 @@ classdef CLASS_events_toolbox_dialog < handle
                     set(popup.sources(k),'units',units','position',[cur_pos(1:2),extent(3:4)]);
                     cur_pos(1)=cur_pos(1)+extent(3)+delta;  %move to the right...
                     
-                end;
+                end
                 
                 cur_pos(2)=cur_pos(2)+extent(4)+delta;  %move up to the next row
                 cur_pos(1) = delta;
@@ -322,7 +322,7 @@ classdef CLASS_events_toolbox_dialog < handle
                     
                     for k = 1:obj.num_sources
                         source_indices(k) = get(popup.sources(k),'value');
-                    end;
+                    end
                     
                     if(~isempty(function_name))
                         MARKING.showBusy();
@@ -344,15 +344,15 @@ classdef CLASS_events_toolbox_dialog < handle
                             synth_channel_name = get(edit.synth_channel,'string');
                             if(isempty(synth_channel_name))
                                 synth_channel_name = 'Default Name';
-                            end;
+                            end
                             CHANNELS_CONTAINER.synthesizeChannel(detectStruct.new_data,source_indices,synth_channel_name);
                             CHANNELS_CONTAINER.align_channels_on_axes();
-                        end;
+                        end
                         
                         event_label = get(edit.event_label,'string');
                         if(isempty(event_label))
                             event_label = [synth_channel_name,'.',function_name,'.X'];
-                        end;
+                        end
                         source.channel_indices = source_indices;
                         source.algorithm = function_name;
                         preference_function = get(handles.button.method_properties,'userdata');
@@ -362,7 +362,7 @@ classdef CLASS_events_toolbox_dialog < handle
                         MARKING.showReady();
                     else
                         disp 'nothing happened';
-                    end;
+                    end
                     
                     disp('the dialog was closed');
                     delete(obj.dialog_handle);
@@ -370,9 +370,9 @@ classdef CLASS_events_toolbox_dialog < handle
                 else
                     disp('the dialog was closed');
                     obj.dialog_handle = [];
-                end;
-            end;
-        end;
+                end
+            end
+        end
         
     end %end methods
        
@@ -420,9 +420,9 @@ function checkbox_synth_channelCallback(hObject,eventdata,handles)
             event_source_index = cur_index;
         else
             event_source_index = synth_channel_index;
-        end;
+        end
         
-    end;
+    end
     
     set(handles.popup.event_source,'value',event_source_index);
 
@@ -444,7 +444,7 @@ function popup_event_source_callback(hObject,eventdata,handles,synth_channel_ind
 %is automatically checked.
     if(get(hObject,'value')==synth_channel_index)
         set(handles.checkbox.synth_channel,'value',1);
-    end;
+    end
 end
 
 
@@ -476,14 +476,14 @@ function method_popupCallback(hObject,eventdata,handles)
     else
         set([handles.text.matlab_function,handles.edit.matlab_function],'visible','off');
         set(hObject,'TooltipString',help(fullfile('+detection',[methods.mfile{current_selection},'.m'])));        
-    end;
+    end
     
     
     if(methods.num_reqd_indices(current_selection)==0)
         set(handles.popup.num_sources,'value',1,'enable','on');
     else
         set(handles.popup.num_sources,'value',methods.num_reqd_indices(current_selection),'enable','off');
-    end;
+    end
     set(handles.edit.synth_channel,'string',methods.evt_label{current_selection});
     set(handles.edit.event_label,'string',methods.evt_label{current_selection});
     set(handles.edit.matlab_function,'string',methods.mfile{current_selection});
@@ -549,7 +549,7 @@ function resize(handles)
         popup_method_pos(2) = reference_pos(2)+delta+reference_pos(4);
         set(handles.text.method_select,'position',text_method_pos);
         set(handles.popup.method,'position',popup_method_pos);        
-    end;
+    end
    
     dlg_pos = get(handles.dialog,'position'); %resize the dialog
     dlg_pos(4) = popup_method_pos(2)+delta+extent(4);

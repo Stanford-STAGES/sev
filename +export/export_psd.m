@@ -34,7 +34,6 @@ function didExport = export_psd(sourcePath, exportPath, params, varargin)
                 end
             end
             
-            
             if(isnan(params.channelLabel))
                 params.channelLabel = 'all';
             end
@@ -137,7 +136,7 @@ function canExport = exportPSDFiles(psdPathname, exportPath, params)
                         % alpha, sigma, beta, gamma, mean0_30, sum0_30, a, s, e
                         removeColumns = {'Slow','Delta','Theta','Alpha','Sigma','Beta','Gamma','Mean0_30','Sum0_30','A','S','E'};
                         
-                        psdHeader = strrep(makeWhereInString(psdSettings.column_names(1:end-numel(removeColumns)),'string',false),'"','');
+                        psdHeader = strrep(makeWhereInString([psdSettings.column_names(1:end-numel(removeColumns)),'time_evaluated_s'],'string',false),'"','');
                     end
                     psdStruct = CLASS_codec.getPSDStruct(psdData,psdSettings,filenamePrefix,artifactLabels,artifactExcluded);
                     
@@ -175,7 +174,8 @@ function canExport = exportPSDFiles(psdPathname, exportPath, params)
                                     end
                                     curPSD = psdStruct.(estimate_type).(filenamePrefix{s}).(artifactLabels{a});
                                     if(~isempty(curPSD))
-                                        curPSDLine = makeWhereInString(curPSD,'numeric',false);
+                                        durPSD = psdStruct.duration_s.(filenamePrefix{s}).(artifactLabels{a});
+                                        curPSDLine = makeWhereInString([curPSD(:);durPSD]','numeric',false);
                                         fprintf(stagePSDLiteFid,'%s, %s\n',curPatID, curPSDLine);
                                     else
                                         
