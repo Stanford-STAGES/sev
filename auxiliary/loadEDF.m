@@ -14,6 +14,9 @@ function [HDR, signal] = loadEDF(filename,channels)
 % (i.e. []) is treated the same as if it were not included.  
 % 1/19/2019: channels can now also contain a cell string of channel labels
 % to load. 
+% Feb 28, 2020: Modified so that 44 byte/character reserved field is
+% separate entry from 32 byte x Num channels reserved field.  Otherwise we
+% lose EDF+ identificaion information.
 if(nargin==0)
     disp 'No input filename given; aborting';
     return;
