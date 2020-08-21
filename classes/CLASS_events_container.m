@@ -2468,7 +2468,7 @@ classdef CLASS_events_container < handle
         %> @retval PatID The patient ID corresponding to patstudykey
         %> @retval StudyNum The study number corresponding to patstudykey
         function [PatID,StudyNum] = getDB_PatientIdentifiers(patstudykey)
-            [PatID,StudyNum] = CLASS_code.getDB_PatientIdentifiers(patstudykey);
+            [PatID,StudyNum] = CLASS_codec.getDB_PatientIdentifiers(patstudykey);
         end
         
         

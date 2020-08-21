@@ -89,12 +89,12 @@ classdef CLASS_database_psg < CLASS_database
             end            
             sta_exp = '(?<PatID>[a-zA-Z0-9]+)_(?<StudyNum>\d+)[^\.]+\.STA';            
             if(isempty(STA_pathname))
-                stats = CLASS_database.stage2stats([],sta_exp);
+                stats = CLASS_database_psg.stage2stats([],sta_exp);
             else
-                stats = CLASS_database.stage2stats(STA_pathname,sta_exp);
+                stats = CLASS_database_psg.stage2stats(STA_pathname,sta_exp);
             end            
-            CLASS_database.static_create_StageStats_T(obj.dbStruct);            
-            CLASS_database.populate_StageStats_T(stats,obj.dbStruct);
+            CLASS_database_psg.static_create_StageStats_T(obj.dbStruct);            
+            CLASS_database_psg.populate_StageStats_T(stats,obj.dbStruct);
         end
         
         % ======================================================================
@@ -573,7 +573,7 @@ classdef CLASS_database_psg < CLASS_database
                 ', Pct_study DECIMAL (4,2) DEFAULT ''0'''...
                 ', Pct_sleep DECIMAL (4,2) DEFAULT ''0'''...
                 ', Fragmentation_count SMALLINT DEFAULT ''0'''...
-                ', Latency SMALLINT DEFAULT ''0'''...
+                ', Latency INT DEFAULT ''0'''...
                 ', PRIMARY KEY (PatStudyKey, Stage, cycle)'...
                 ')']);
             
@@ -1059,7 +1059,7 @@ classdef CLASS_database_psg < CLASS_database
                             else
                                 detectStruct.detectorID = detectorID;
                             end
-                            CLASS_database.insertDatabaseDetectorInfoRecord(dbStruct,detectStruct);
+                            CLASS_database_psg.insertDatabaseDetectorInfoRecord(dbStruct,detectStruct);
                             cur_config = cur_config+1;
                         end
                     end
@@ -1160,7 +1160,7 @@ classdef CLASS_database_psg < CLASS_database
                                 detectStruct.configID = event_settings{k}.configID(config);
                                 detectStruct.params = event_settings{k}.params(config);
                                 %insert it into the database now
-                                CLASS_events_container.insertDatabaseDetectorInfoRecord(dbStruct,detectStruct);
+                                CLASS_database_psg.insertDatabaseDetectorInfoRecord(dbStruct,detectStruct);
                             end
                         end
                     end
@@ -1226,7 +1226,7 @@ classdef CLASS_database_psg < CLASS_database
                         else
                             %I need to add/insert the detector config to detectorinfo_t here...
                             %add it either way okay...
-                            CLASS_database.insertDatabaseDetectorInfoRecord(dbStruct,event_k)
+                            CLASS_database_psg.insertDatabaseDetectorInfoRecord(dbStruct,event_k)
                         end
                         
                         %now get the detectorID that I have for these...
@@ -1315,7 +1315,7 @@ classdef CLASS_database_psg < CLASS_database
         %> filenames.
         function makeSTA2file(STA_pathname,patID_studyNum_regexp)
             save2file = true;
-            CLASS_database.stage2stats(STA_pathname,patID_studyNum_regexp,save2file);
+            CLASS_database_psg.stage2stats(STA_pathname,patID_studyNum_regexp,save2file);
         end
             
         %> @brief Converts .STA files (ascii tab delimited files with first column epoch
@@ -1379,8 +1379,8 @@ classdef CLASS_database_psg < CLASS_database
                             sta_filename = fullfile(STA_pathname,filenames{k});
 
                             STAGES = loadSTAGES(sta_filename);
-                            cycle_vector = CLASS_database.stage2cycle(STAGES.line);
-                            stage_stats = CLASS_database.getStagingStats(STAGES.line,cycle_vector,STAGES.cycles,fCell{k}.PatID,fCell{k}.StudyNum);
+                            cycle_vector = CLASS_database_psg.stage2cycle(STAGES.line);
+                            stage_stats = CLASS_database_psg.getStagingStats(STAGES.line,cycle_vector,STAGES.cycles,fCell{k}.PatID,fCell{k}.StudyNum);
                             
                             stats{k} = stage_stats;
                             
@@ -1567,7 +1567,7 @@ classdef CLASS_database_psg < CLASS_database
             for k=1:numel(SCO_labels)
                 detectStruct.method_function = SCO_labels{k};
                 detectStruct.method_label = SCO_labels{k};
-                CLASS_database.insertDatabaseDetectorInfoRecord(dbStruct,detectStruct);
+                CLASS_database_psg.insertDatabaseDetectorInfoRecord(dbStruct,detectStruct);
             end
         end
         
