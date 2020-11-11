@@ -21,6 +21,11 @@ function [filenames,fullfilenames, fileDatenums] = getFilenamesi(pathname,ext,so
     
     % copyright Hyatt Moore IV
     
+    % Requires cells2mat, cells2cell
+    if ismac
+        addpath('~/git/matlab/auxiliary');
+    end
+    
     if(nargin<3)
         sortByDateFlag = false;
         if(nargin<2)

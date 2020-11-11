@@ -1671,6 +1671,7 @@ classdef CLASS_codec < handle
             defaultStruct = [names; defaultValues];
             defaultStruct = struct(defaultStruct{:});
             evt_Struct = parse_pv_pairs(defaultStruct, varargin);
+            
             % REPLACEMENT CODE
             
             
@@ -1763,8 +1764,8 @@ classdef CLASS_codec < handle
         %> for field names.
         % =================================================================
         function eventStruct = tal2evt(tal,HDR)
-            startSec = str2double(tal.tal_start);            
-            durationSec = str2double(tal.duration);
+            startSec = tal.tal_start;    % str2double(tal.tal_start);            
+            durationSec = tal.duration;  % str2double(tal.duration);
             fs = max(HDR.samplerate);  %use the highest sampling rate available in the signal.  Otherwise you may run into issues of decimal precision sample indices.
             stageStrPrefixCount = numel('Sleep stage ');            
             if(strncmpi(tal.annotation,'Sleep stage ',stageStrPrefixCount))
