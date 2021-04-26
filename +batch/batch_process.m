@@ -46,7 +46,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
         try
             % waitHandle = waitbar(0,'Initializing batch processing job','name','Batch Processing Statistics','resize','on','createcancelbtn',{@cancel_batch_Callback});
             user_cancelled = false;
-            waitHandle = waitbar(0,'Initializing job','name','Batch Processing','resize','on','createcancelbtn',@cancel_batch_Callback,'userdata',user_cancelled,'tag','waitbarHTag');
+            waitHandle = waitbar(0,'Initializing job','name','Batch Processing','resize','on','createcancelbtn',@CLASS_batch.cancel_batch_Callback,'userdata',user_cancelled,'tag','waitbarHTag');
             
             
             BATCH_PROCESS.waitHandle = waitHandle;
@@ -273,10 +273,8 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
             else
                 DBstruct = [];
             end
-            
-            
-            BATCH_PROCESS.event_settings = event_settings;
-            
+                        
+            BATCH_PROCESS.event_settings = event_settings;            
             
             %% Begin batch file processing  - parallel computing parfor
             %     parfor i = 1:file_count - need to update global calls to work
@@ -286,8 +284,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
             files_attempted = false(file_count,1);
             files_completed = false(file_count,1);
             files_skipped = false(file_count,1); %logical indices to mark which files were skipped
-            
-            
+                        
             start_time = now;
             %     est_str = '?'; %estimate of how much time is left to run the job
             
@@ -329,8 +326,6 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                         %             end
                         if(~file_list(i).isdir)
                             files_attempted(i) = 1;
-                            
-                            
                             
                             %initialize the files...
                             %                 tStart = clock;
@@ -541,8 +536,7 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                     end
                                     if(BATCH_PROCESS.output_files.save2txt)
                                         batch_EVENT_CONTAINER.save2txt(event_filenames);
-                                    end
-                                    
+                                    end                                    
                                 end
                                 
                                 %SAVE THINGS TO FILE....
@@ -745,11 +739,9 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
             [log_path,log_filename,log_file_ext] = fileparts(MARKING.SETTINGS.VIEW.parameters_filename);
             MARKING.SETTINGS.saveParametersToFile([],fullfile(BATCH_PROCESS.output_path.current,[log_filename,log_file_ext]));
             
-            
             if(exist('waitHandle','var')&&ishandle(waitHandle))
                 delete(waitHandle(1));
             end
-
             
             %not really necessary, since I am not going to update the handles after
             %this function call in order for everything to go back to what it was

@@ -174,13 +174,15 @@ function [detection_settings, EDF_indices2load] = getChannelIndices(detection_se
 %event in batch mode, under artifact (A) column
 %.method_function = matlab function that is called to detect the events
 
-
+% Update to handle additions to struct changes that were not a problem, or
+% ignored in previous MATLAB version
 for r = 1:numel(detection_settings)
     curStruct = detection_settings(r);
     num_channels = numel(curStruct.channel_labels);
     
     %make room in memory for the channel_indices reference
     curStruct.channel_indices = zeros(1,num_channels);
+    detection_settings(r).channel_indices = zeros(1, num_channels);
     for c=1:num_channels
         label = curStruct.channel_labels{c};
         [curStruct.channel_indices(c), EDF_indices2load] = getOrSetLoadIndex(label, EDF_labels, EDF_indices2load);
@@ -189,6 +191,7 @@ for r = 1:numel(detection_settings)
     if(isfield(curStruct,'reference_channel_label'))
         ref_label = curStruct.reference_channel_label;
         [curStruct.reference_channel_index, EDF_indices2load] = getOrSetLoadIndex(ref_label, EDF_labels, EDF_indices2load);
+        detection_settings(r).reference_channel_index;
     end
     detection_settings(r) = curStruct;    
 end
