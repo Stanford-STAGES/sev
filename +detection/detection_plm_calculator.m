@@ -107,6 +107,9 @@ else
     params.summer_order = 2;
     params.noisefloor_uV_to_turnoff_detection = 50;
     
+    % 2016 rules
+    % params.max_duration_sec = inf;
+    
     
     %adaptive noise cancel if selected
     if(params.filter_with_anc)
@@ -202,7 +205,10 @@ else
                 HR_lead(p) = 11-HR_min_ind; % a result of 1 means that the base_hr was lowest
                 HR_lag(p) = HR_max_ind;
             catch ME
-                disp(ME);
+                if j+1 <= stop_bound
+                    fprintf('Exception caught with Heart Rate analysis of PLM.  Continuing\n');
+                    showME(ME);
+                end
             end
         end
         
