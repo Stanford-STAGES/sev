@@ -18,6 +18,8 @@ auxiliary/matlab_workspace.mat
 
 *.plist
 
+*.asv
+
 prefilter_dlg.bak
 
 *.plist
