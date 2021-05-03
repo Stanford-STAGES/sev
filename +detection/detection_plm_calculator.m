@@ -16,6 +16,7 @@
 %> @li @c merge_within_sec Window duration, in seconds, to merge consuective detections; {2.0};
 %> @li @c use_summer SNR+ option (0 = no; {1} = yes).
 %> @li @c median_removal  Minimum strength option (0 = no; {1} = yes). 
+%> @li @c maximum_duration_sec  Maximum duration allowed to be considered a leg movement ({10} for AASM 2007, {inf} for 2016 rules)
 %
 %> @retval detectStruct a structure with following fields
 %> @li @c new_data Copy of processed input data (e.g noise cancelled)
@@ -68,6 +69,8 @@ defaultParams.average_power_window_sec = 20;  %calculate average power over cons
 defaultParams.merge_within_sec = 2.0;
 defaultParams.use_summer = 1;
 defaultParams.median_removal = 1;
+defaultParams.max_duration_sec = 10.0;  % AASM 2007 scoring criteria here
+                                        % inf for 2016 rules
 
 % return default parameters if no input arguments are provided.
 if(nargin==0)
@@ -103,7 +106,7 @@ else
     % upper and lower thresholds are based on AASM 2007 scoring criteria here
     params.threshold_high_uV = 8; %8 uV above resting baseline
     params.threshold_low_uV = 2;
-    params.max_duration_sec = 10.0;
+    % params.max_duration_sec = 10.0;
     params.summer_order = 2;
     params.noisefloor_uV_to_turnoff_detection = 50;
     
