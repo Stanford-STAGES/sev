@@ -926,7 +926,20 @@ classdef CLASS_events < handle
         % =================================================================
         function save2text(obj,filename,stageStruct)
             
-            if(~isempty(obj.start_stop_matrix))
+            if isempty(obj.start_stop_matrix)
+                filename = [filename,'.',obj.label,'.',num2str(obj.configID),'.txt'];
+                fid = fopen(filename,'w');
+                if(fid<=0)
+                    fprintf('The file, %s, could not be opened for writing\n',filename);
+                else
+                    hdr = {obj.label,...
+                        [obj.channel_name,' (',num2str(obj.channel_number),')']};
+                    fprintf(fid,'#Event Label =\t%s\r\n#EDF Channel Label(number) = \t%s\r\n',hdr{1},hdr{2});
+                    fprintf(fid,'#Start_time\tDuration_seconds\tStart_sample\tStop_sample\tEpoch\tStage\tCycle');
+                    fprintf(fid,'\n');
+                    fclose(fid);
+                end
+            elseif(~isempty(obj.start_stop_matrix))
                 
                 t0 = stageStruct.startDateTime;
                 

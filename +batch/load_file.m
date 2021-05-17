@@ -137,9 +137,9 @@ cur_synth_channel = 1;
 %now go through and produce the channels meant to be synthesized
 for k = 1:numel(all_indices)
     if(~loadable_indices(k))
-        synth_settings = localBATCH_PROCESS.synth_CHANNEL.settings_lite{cur_synth_channel};
-        filterStruct = localBATCH_PROCESS.synth_CHANNEL.structs{cur_synth_channel};
-        synthLabel = localBATCH_PROCESS.synth_CHANNEL.names{cur_synth_channel};
+        synth_settings = localBATCH_PROCESS.synth_CHANNEL.settings_lite(cur_synth_channel);
+        filterStruct = cell2mat(localBATCH_PROCESS.synth_CHANNEL.structs(cur_synth_channel));
+        synthLabel = cell2mat(localBATCH_PROCESS.synth_CHANNEL.names(cur_synth_channel));
         for j=1:numel(filterStruct)
             filterStruct(j).src_channel_index = synth_settings.channel_indices(find(strcmp(filterStruct(j).src_channel_label,synth_settings.channel_labels),1));
             for m=1:numel(filterStruct(j).ref_channel_index)
@@ -294,17 +294,17 @@ if(numel(BATCH_PROCESS.synth_CHANNEL.structs)>=1)
     verified_indices = false(numel(BATCH_PROCESS.synth_CHANNEL.structs),1);
     all_labels = {};
     for j=1:numel(BATCH_PROCESS.artifact_settings)
-        all_labels = [all_labels;BATCH_PROCESS.artifact_settings{j}.channel_labels];
+        all_labels = [all_labels;BATCH_PROCESS.artifact_settings(j).channel_labels];
     end
     for j=1:numel(BATCH_PROCESS.event_settings)
-        all_labels = [all_labels;BATCH_PROCESS.event_settings{j}.channel_labels];
+        all_labels = [all_labels;BATCH_PROCESS.event_settings(j).channel_labels];
     end
-    for j=1:numel(BATCH_PROCESS.PSD_settings)
-        all_labels = [all_labels;BATCH_PROCESS.PSD_settings{j}.channel_labels];
+    for j=1:numel(BATCH_PROCESS.spectral_settings)
+        all_labels = [all_labels;BATCH_PROCESS.spectral_settings(j).channel_labels];
     end
-    for j=1:numel(BATCH_PROCESS.MUSIC_settings)
-        all_labels = [all_labels;BATCH_PROCESS.MUSIC_settings{j}.channel_labels];
-    end
+    %     for j=1:numel(BATCH_PROCESS.MUSIC_settings)
+    %         all_labels = [all_labels;BATCH_PROCESS.MUSIC_settings{j}.channel_labels];
+    %     end
    
     for k = 1:numel(verified_indices)
         %check each name and see if there is a match 

@@ -431,42 +431,44 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                         pBatchStruct = event_settings(k).pBatchStruct;
                                         
                                         %there are no combinations to use....
-                                        if(isempty(pBatchStruct))
+                                        if isempty(pBatchStruct) || event_settings(k).numConfigurations==1
                                             source_indices = event_settings(k).channel_indices;
                                             detectStruct = batch_EVENT_CONTAINER.evaluateDetectFcn(function_name, source_indices, event_settings(k).params);
-                                            if(~isempty(detectStruct.new_events))
-                                                sourceStruct = [];
-                                                sourceStruct.channel_indices = source_indices;
-                                                sourceStruct.algorithm = function_name;
-                                                sourceStruct.editor = 'none';
-                                                sourceStruct.pStruct = [];
-                                                
+                                            sourceStruct = [];
+                                            sourceStruct.channel_indices = source_indices;
+                                            sourceStruct.algorithm = function_name;
+                                            sourceStruct.editor = 'none';
+                                            sourceStruct.pStruct = [];
+                                            
+                                            if isempty(detectStruct.new_events)
+                                                batch_EVENT_CONTAINER.addEmptyEvent(event_settings(k).method_label,source_indices,sourceStruct,detectStruct.paramStruct);
+                                            else                                                
                                                 %add the event
                                                 batch_EVENT_CONTAINER.addEvent(detectStruct.new_events,event_settings(k).method_label,source_indices,sourceStruct,detectStruct.paramStruct);
-                                                batch_EVENT_CONTAINER.getCurrentChild.batch_mode_label = event_settings(k).batch_mode_label;
+                                            end
+                                            batch_EVENT_CONTAINER.getCurrentChild.batch_mode_label = event_settings(k).batch_mode_label;
+                                            
+                                            batch_EVENT_CONTAINER.getCurrentChild.configID = event_settings(k).configID;
+                                            batch_EVENT_CONTAINER.getCurrentChild.detectorID = event_settings(k).detectorID;
+                                            
+                                            
+                                            %                                     if(~isempty(event_settings(k).params)) %in this case, configurationLegend.detection_method.txt file was created
+                                            %                                         configID = 1;
+                                            %                                     else
+                                            %                                         configID = 0; %this is the default anyway...-> no file was created
+                                            %                                     end
+                                            %
+                                            %                                     EVENT_CONTAINER.cell_of_events{EVENT_CONTAINER.num_events}.configID = configID;
+                                            
+                                            if event_settings(k).save2img && ~isempty(detectStruct.new_events)
+                                                %put these images in their own subdirectory based on
+                                                %patients identifier
+                                                event_images_path = fullfile(full_events_images_path,event_settings(k).method_label);
                                                 
-                                                batch_EVENT_CONTAINER.getCurrentChild.configID = event_settings(k).configID;
-                                                batch_EVENT_CONTAINER.getCurrentChild.detectorID = event_settings(k).detectorID;
                                                 
-                                                
-                                                %                                     if(~isempty(event_settings(k).params)) %in this case, configurationLegend.detection_method.txt file was created
-                                                %                                         configID = 1;
-                                                %                                     else
-                                                %                                         configID = 0; %this is the default anyway...-> no file was created
-                                                %                                     end
-                                                %
-                                                %                                     EVENT_CONTAINER.cell_of_events{EVENT_CONTAINER.num_events}.configID = configID;
-                                                
-                                                if(event_settings(k).save2img)
-                                                    %put these images in their own subdirectory based on
-                                                    %patients identifier
-                                                    event_images_path = fullfile(full_events_images_path,event_settings(k).method_label);
-                                                    
-                                                    
-                                                    img_filename_prefix = [cur_filename(1:end-4),'_',event_settings(k).method_label];
-                                                    full_img_filename_prefix = fullfile(event_images_path,img_filename_prefix);
-                                                    batch_EVENT_CONTAINER.save2images(k,full_img_filename_prefix,image_settings);
-                                                end
+                                                img_filename_prefix = [cur_filename(1:end-4),'_',event_settings(k).method_label];
+                                                full_img_filename_prefix = fullfile(event_images_path,img_filename_prefix);
+                                                batch_EVENT_CONTAINER.save2images(k,full_img_filename_prefix,image_settings);
                                             end
                                             
                                             %alternate case is to create and add an event
@@ -487,17 +489,23 @@ function batch_process(pathname, BATCH_PROCESS,playlist)
                                                 catch me
                                                     showME(me);
                                                 end
-                                                if(~isempty(detectStruct.new_events))
-                                                    sourceStruct.channel_indices = source_indices;
-                                                    sourceStruct.algorithm = function_name;
-                                                    sourceStruct.editor = 'none';
-                                                    sourceStruct.pStruct = pStruct;
+                                                
+                                                sourceStruct.channel_indices = source_indices;
+                                                sourceStruct.algorithm = function_name;
+                                                sourceStruct.editor = 'none';
+                                                sourceStruct.pStruct = pStruct;
+                                                if isempty(detectStruct.new_events)
+                                                    batch_EVENT_CONTAINER.addEmptyEvent(event_settings(k).method_label,source_indices,sourceStruct,detectStruct.paramStruct);
+                                                else
+                                                    %add the event
                                                     batch_EVENT_CONTAINER.addEvent(detectStruct.new_events,event_settings(k).method_label,source_indices,sourceStruct,detectStruct.paramStruct);
-                                                    batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.batch_mode_label = event_settings(k).batch_mode_label;
-                                                    batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.configID = configID;
-                                                    batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.batch_mode_label = event_settings(k).batch_mode_label;
-                                                    batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.detectorID = detectorID;
                                                 end
+                                                
+                                                batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.batch_mode_label = event_settings(k).batch_mode_label;
+                                                batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.configID = configID;
+                                                batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.batch_mode_label = event_settings(k).batch_mode_label;
+                                                batch_EVENT_CONTAINER.cell_of_events{batch_EVENT_CONTAINER.num_events}.detectorID = detectorID;
+                                                
                                             end
                                             end_evt_ind = batch_EVENT_CONTAINER.num_events;
                                             

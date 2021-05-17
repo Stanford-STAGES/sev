@@ -41,7 +41,7 @@ else
         end
     end
     
-    
+    % Delay must be an even value
     delay = (params.order)/2;
     
     b = fir1(params.order,params.freq_hz/params.samplerate*2,'high');

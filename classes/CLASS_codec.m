@@ -89,60 +89,64 @@ classdef CLASS_codec < handle
                         epochs = 1:numel(stageVec);
                         stages = [epochs(:), stageVec];
                     end
-                    
-                    % stages is Mx2 matrix with column 1 being the
-                    % epochs and column 2 being the stage
-                    if(num_epochs<0)
-                        num_epochs = size(stages,2);
-                    end
-                    
-                    if(nargin>1 && ~isempty(num_epochs) && floor(num_epochs)>0)
-                        if(num_epochs~=size(stages,1))
-                            STAGES.epochs = stages(:,1);
-                            STAGES.line = repmat(default_unknown_stage,max([num_epochs;size(stages,1);STAGES.epochs(:)]),1);
-                            STAGES.line(STAGES.epochs) = stages(:,2);
-                        else
-                            %this cuts things off at the end, where we assume the
-                            %disconnect between num_epochs expected and num epochs found
-                            %has occurred. However, logically, there is no guarantee that
-                            %the disconnect did not occur anywhere else (e.g. at the
-                            %beginning, or sporadically throughout)
-                            STAGES.line = stages(1:floor(num_epochs),2);
-                        end
+                    if isempty(stages)                        
+                        fprintf('Warning: %s is empty\n',stages_filename);                        
                     else
-                        STAGES.line = stages(:,2); %grab the sleep stages
-                    end
+                        
+                        % stages is Mx2 matrix with column 1 being the
+                        % epochs and column 2 being the stage
+                        if(num_epochs<0)
+                            num_epochs = size(stages,2);
+                        end
+                        
+                        if nargin>1 && ~isempty(num_epochs) && floor(num_epochs)>0
+                            if(num_epochs~=size(stages,1))
+                                STAGES.epochs = stages(:,1);
+                                STAGES.line = repmat(default_unknown_stage,max([num_epochs;size(stages,1);STAGES.epochs(:)]),1);
+                                STAGES.line(STAGES.epochs) = stages(:,2);
+                            else
+                                %this cuts things off at the end, where we assume the
+                                %disconnect between num_epochs expected and num epochs found
+                                %has occurred. However, logically, there is no guarantee that
+                                %the disconnect did not occur anywhere else (e.g. at the
+                                %beginning, or sporadically throughout)
+                                STAGES.line = stages(1:floor(num_epochs),2);
+                            end
+                        else
+                            STAGES.line = stages(:,2); %grab the sleep stages
+                        end
                         %                 elseif(strcmpi(ext,'.evts'))
                         %                     [~,stageVec] = CLASS_codec.parseSSCevtsFile(stages_filename,default_unknown_stage);
                         %                     STAGES.line = stageVec;
                         %                     STAGES.epochs = 1:numel(STAGES.line);
                         %                 end
-                    
-                    if(nargin<2)
-                        num_epochs = numel(STAGES.line);
+                        
+                        if(nargin<2)
+                            num_epochs = numel(STAGES.line);
+                        end
+                        %calculate number of epochs in each stage
+                        for k = 0:numel(STAGES.count)-1
+                            STAGES.count(k+1) = sum(STAGES.line==k);
+                        end
+                        
+                        firstNonWake = 1;
+                        while( firstNonWake<=numel(STAGES.line) && (STAGES.line(firstNonWake)==7||STAGES.line(firstNonWake)==0))
+                            firstNonWake = firstNonWake+1;
+                        end
+                        STAGES.firstNonWake = firstNonWake;
+                        if(num_epochs~=numel(STAGES.line))
+                            fprintf(1,'%s contains %u stages, but shows it should have %u\n',stages_filename,numel(STAGES.line),num_epochs);
+                        end
+                        
+                        STAGES.filename = stages_filename;
                     end
-                    %calculate number of epochs in each stage
-                    for k = 0:numel(STAGES.count)-1
-                        STAGES.count(k+1) = sum(STAGES.line==k);
-                    end
-                    
-                    firstNonWake = 1;
-                    while( firstNonWake<=numel(STAGES.line) && (STAGES.line(firstNonWake)==7||STAGES.line(firstNonWake)==0))
-                        firstNonWake = firstNonWake+1;
-                    end
-                    STAGES.firstNonWake = firstNonWake;
-                    if(num_epochs~=numel(STAGES.line))
-                        fprintf(1,'%s contains %u stages, but shows it should have %u\n',stages_filename,numel(STAGES.line),num_epochs);
-                    end
-                    
-                    STAGES.filename = stages_filename;
                 else
                     
                     mfile =  strcat(mfilename('fullpath'),'.m');
                     fprintf('failed in %s\n\tFilename argument for loadSTAGES is not supported.\n',mfile);
                     %  throw(MException('SEV:ARGERR','Filename argument for loadSTAGES could not be found'));
-                    
                 end
+                
             else
                 mfile =  strcat(mfilename('fullpath'),'.m');
                 fprintf('failed in %s\n\tMissing or empty filename argument for loadSTAGES\n',mfile);
