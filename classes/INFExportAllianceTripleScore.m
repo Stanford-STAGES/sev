@@ -1,1 +1,1 @@
-/Users/known/git/informaton.dev/tools/exportTripleScore/INFExportAllianceTripleScore.m
+symbolic link to mix-in class.

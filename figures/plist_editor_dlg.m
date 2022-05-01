@@ -64,13 +64,13 @@ function plist_editor_dlg_OpeningFcn(hObject, ~, handles, varargin)
 
 % Choose default command line output for plist_editor_dlg
 
-handles.output = [];
+% handles.output = [];
 if(numel(varargin)>1)
     handles.user.parametersInfPathname = varargin{2}; 
 else
     %default is to load detection methods
     dPath = fileparts(mfilename('fullpath'));
-    handles.user.parametersInfPathname = fullfile(dPath,'+detection');
+    handles.user.parametersInfPathname = fullfile(dPath,'../','+detection');
 end
 
 if(exist(handles.user.parametersInfPathname,'file')&&~isdir(handles.user.parametersInfPathname))

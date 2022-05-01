@@ -18,6 +18,8 @@ auxiliary/matlab_workspace.mat
 
 *.plist
 
+*.asv
+
 prefilter_dlg.bak
 
 *.plist
@@ -31,6 +33,8 @@ output/_log.txt2014Oct29_07_34_54.txt
 output/PSD/SEV_Tutorial.LOC-M2.psd.txt
 
 biocals.evt
+
+/external 
 
 auxiliary/screenshotpath.mat
 

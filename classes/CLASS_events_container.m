@@ -774,7 +774,7 @@ classdef CLASS_events_container < handle
                EDF_index = zeros(1,numel(parent_index));
                for k=1:numel(parent_index)
                    EDF_index(k) = obj.CHANNELS_CONTAINER.cell_of_channels{parent_index(k)}.EDF_index;
-               end;
+               end
                
                parent_index = parent_index(1); %avoid problems wiht multiple parents, as the case with ocular movements.
                
@@ -789,7 +789,7 @@ classdef CLASS_events_container < handle
                parent_EDF_label = obj.defaults.parent_channel_title;
                parent_channel_samplerate = obj.defaults.parent_channel_samplerate;
                EDF_index = 0;
-           end;
+           end
            obj.channel_vector(obj.num_events) = parent_index;
            obj.cell_of_events{obj.num_events} = ...
                CLASS_events([],...
@@ -804,7 +804,12 @@ classdef CLASS_events_container < handle
                sourceStruct,...
                paramStruct,...
                obj.parent_fig,...
-               obj.parent_axes);           
+               obj.parent_axes); 
+           
+           % Design decision to update the current event index on 5/12/2021
+           obj.cur_event_index = obj.num_events;
+           
+           
         end
         
         % =================================================================
@@ -1965,7 +1970,7 @@ classdef CLASS_events_container < handle
                     warndlg('No events currently available');
                 else
                     
-                end;
+                end
             end
         end  %end save2evts(obj,varargin) 
         
@@ -2008,7 +2013,7 @@ classdef CLASS_events_container < handle
                             eventLabel = strcat(eventLabel,' (',obj.CHANNELS_CONTAINER.getChannelName(obj.channel_vector(k)),')');
                         end
                         uicontrol('style','checkbox','units',units,'string',eventLabel,'parent',pan_channels,'userdata',k,'value',1);
-                    end;
+                    end
                     
                     % left and bottom are the distance from the lower-left corner of the parent object to the lower-left corner of the uicontrol object. width and height are the dimensions of the uicontrol rectangle. All measurements are in units specified by the Units property.
                     
@@ -2069,7 +2074,7 @@ classdef CLASS_events_container < handle
                             end
                         else
                             event2save = get(h_channels(cell2mat(get(h_channels,'value'))==1),'userdata');
-                        end;
+                        end
                         if(iscell(event2save))
                             event2save = cell2mat(event2save);
                         end
@@ -2093,8 +2098,8 @@ classdef CLASS_events_container < handle
                             end
                         end
                         delete(dlg);
-                    end;
-                end;
+                    end
+                end
             end
         end 
         
