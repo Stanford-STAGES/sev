@@ -241,7 +241,7 @@ else
                 paramStruct.high_uV = paramStruct.high_uV(held_events);
             end
             
-        end;
+        end
         
         detectStruct.new_events = new_events;
         detectStruct.new_data = clean_data;
@@ -289,11 +289,7 @@ function [variable_threshold_low_uv, variable_threshold_high_uv, clean_data] = g
         clean_data2 = filter.filter_movsum(clean_data,integrator.params);
         clean_data(summer_indices) = clean_data2(summer_indices); %original detection method;
         
-        
         variable_threshold_low_uv(summer_indices) = variable_threshold_low_uv(summer_indices)+params.threshold_low_uV;
-        
-        
-        
     end
 end
 
@@ -364,11 +360,11 @@ end
                     num_events_out = num_events_out + 1;
                     merged_events(num_events_out,:) = events_in(k,:);
                 end
-            end;
+            end
             merged_events = merged_events(1:num_events_out,:);
         else
             merged_events = events_in;
-        end;
+        end
     end
 
         
