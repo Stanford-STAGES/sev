@@ -1,6 +1,3 @@
-
-.DS_Store
-
 .DS_Store
 
 *.m~
@@ -14,27 +11,17 @@ palidromes.txt
 
 auxiliary/matlab_workspace.mat
 
-*.plist
-
-*.plist
-
 *.asv
 
 prefilter_dlg.bak
-
-*.plist
 
 +filter/nlfilter_median.plist
 
 A0097_4 174733.STA
 
-output/_log.txt2014Oct29_07_34_54.txt
-
-output/PSD/SEV_Tutorial.LOC-M2.psd.txt
+output/*
 
 biocals.evt
-
-/external 
 
 auxiliary/screenshotpath.mat
 
@@ -43,9 +30,5 @@ auxiliary/screenshotpath.mat
 *.inf~
 
 *.txt
-
-*.mat
-
-*.mat
 
 *.mat
