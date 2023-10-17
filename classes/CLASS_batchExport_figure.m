@@ -21,7 +21,9 @@ classdef CLASS_batchExport_figure < IN_FigureController
             mInd = this.getExportMethodIndex();
             methodStruct.mfilename = this.methodsStruct.mfilename{mInd};
             methodStruct.editor = this.methodsStruct.settingsEditor{mInd};
-            % methodStruct.settings = this.methodsStruct.settings{mInd};
+
+            % Sometimes this is commented out ...
+            methodStruct.settings = this.methodsStruct.settings{mInd};
             methodStruct.description = this.methodsStruct.description{mInd};
             methodStruct.requires = this.methodsStruct.requires{mInd};
             
@@ -239,7 +241,7 @@ classdef CLASS_batchExport_figure < IN_FigureController
                                waitbar(i/(file_count+0.9),waitbarH,status);
                                
                                sec_per_epoch = 30;
-                               studyInfo.num_epochs = studyInfoStruct.edf_header.duration_sec/sec_per_epoch;
+                               studyInfo.num_epochs = ceil(studyInfoStruct.edf_header.duration_sec/sec_per_epoch);
                                
                                %% load stages
                                stagesStruct = CLASS_codec.loadSTAGES(studyInfoStruct.stages_filename,studyInfo.num_epochs);

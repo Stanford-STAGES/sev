@@ -75,6 +75,10 @@ classdef CLASS_codec < handle
                 if(ismember(lower(ext), {'.sta','.evts','.txt','.edf'}))
                     if(strcmpi(ext,'.sta'))
                         stages = load(stages_filename,'-ASCII'); %for ASCII file type loading
+                        [r,c] = size(stages);
+                        if r==1 || c==1
+                            stages = [(1:numel(stages))',stages(:)];
+                        end
                     elseif(strcmpi(ext,'.edf'))
                         stageStruct = CLASS_codec.getStageStructFromEDFPlusFile(stages_filename);
                         % epochs = stageStruct.epochs;
