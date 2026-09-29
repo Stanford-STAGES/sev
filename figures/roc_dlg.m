@@ -55,10 +55,7 @@ function roc_dlg_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for roc_dlg
 handles.output = hObject;
 
-default_dir = '/Users/hyatt4/Documents/Sleep Project/Data/events';
-
-%uncomment for release to others
-%default_dir = pwd;
+default_dir = pwd;
 set(handles.text_dir,'string',default_dir);
 fillListBoxes(default_dir,handles);
 set(handles.axes1,'box','on','xlimmode','manual','ylimmode','manual');

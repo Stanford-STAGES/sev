@@ -1,20 +1,22 @@
-    [HDR, signal] = loadEDF(filename,channels)
+# Loading EDF files
 
-     HDR = loadEDF(filename)`
-        HDR is a struct containing .EDF file's header infromation 
+Load selected channels and header information from European Data Format (.edf) files.
 
-     [HDR, signal] = loadEDF(filename,channels)`
-       filename - string name identfiying European Data Format file to load.
-       channels is a vector of the numeric signals to be loaded.  If left blank,
-       then all of the channels in the EDF will be loaded.  
+```matlab
+HDR = loadEDF(filename)
+[HDR, signal] = loadEDF(filename, channels)
+[HDR, signal] = loadEDF(filename)
+```
 
-     [HDR, signal] = loadEDF(filename)`
-      signals is cell array of numeric channel values for all recorded channels
-      stored in the .EDF file filename.
+- `filename`: name of the EDF file to load.
+- `channels`: vector of channel indices to load. If omitted, empty, or zero, all channels are loaded when requesting the `signal` output.
+- `HDR`: struct containing the EDF file's header information. Requesting only this output loads only the header.
+- `signal`: cell array of numeric sample vectors for the requested channels.
 
-<i>EDF+</i> format is not supported by loadEDF
+EDF+ format is not supported by `loadEDF`.
 
-Examples:
+## Examples
+
 You will need to download the sleep study (*.EDF), the accompanying scored 
 data file (.SCO), and the Matlab script to load them (.m).
 
@@ -58,14 +60,14 @@ To load channels as a vector form, you type
 
 `[hdr, signal] = loadEDF('A0210_3 170424.EDF',[1,2,3,8]);`
 
-The vector [1,2,4,8] tells the function to load the channels at these 
-indices which are
-1 LOC-M2
-2 ROC-M1
-3 C3-M2
-8 ECG
+The vector `[1,2,3,8]` tells the function to load the channels at these indices:
 
-The are then stored in numerical order in the cell variable signal
+* 1: LOC-M2
+* 2: ROC-M1
+* 3: C3-M2
+* 8: ECG
+
+They are then stored in numerical order in the cell variable `signal`:
 
 * `signal{1}` is vector of LOC-M2 samples
 * `signal{2}` is ROC-M1 samples
@@ -78,6 +80,7 @@ This equates to 3000 samples per epoch or numeric stage value per row entry
 in the .SCO file.
 
 Scores are interpreted as follows:
+
 * 0 = awake
 * 1-4 non-rem sleep stages (stages 1 through 4)
 * 5 = REM sleep (stage 5)

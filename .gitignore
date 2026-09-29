@@ -1,34 +1,23 @@
+# Operating system files
 .DS_Store
 
+# Editor backups and autosaves
 *.m~
-
 *.c~
-
-*.plist
-
-_sev.parameters.txt
-palidromes.txt
-
-auxiliary/matlab_workspace.mat
-
+*.txt~
+*.inf~
 *.asv
-
 prefilter_dlg.bak
 
-+filter/nlfilter_median.plist
+# Local settings
+*.plist
 
-A0097_4 174733.STA
-
+# Generated output and local data
 output/*
-
+A0097_4 174733.STA
 biocals.evt
 
-auxiliary/screenshotpath.mat
-
-*.txt~
-
-*.inf~
-
+# Broad exclusions also cover local parameters, workspaces, and screenshot paths.
+# Files already tracked by Git are unaffected by these rules.
 *.txt
-
 *.mat
